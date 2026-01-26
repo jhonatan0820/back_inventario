@@ -9,10 +9,10 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 def get_connection():
     return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Zambrano1606",
-        database="inventario"
+        host="sql103.infinityfree.com",
+        user="if0_41000592",
+        password="if0_41000592",
+        database="if0_41000592_inventario"
     )
 
 @app.route("/GetProductos", methods=["GET"])
@@ -373,4 +373,5 @@ def delete_productos():
 
 
 if __name__ == "__main__":
+
     app.run(host="127.0.0.1", port=5000, debug=True)
