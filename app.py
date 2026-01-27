@@ -35,7 +35,7 @@ def get_productos():
         LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
         JOIN colores c ON v.id_color = c.id_color
         JOIN tallas t ON v.id_talla = t.id_talla
-        WHERE p.id_estado = 1
+        WHERE v.id_estado = 1 and p.id_estado = 1
     """)
 
     data = cursor.fetchall()
@@ -375,5 +375,6 @@ def delete_productos():
 if __name__ == "__main__":
 
     app.run(host="127.0.0.1", port=5000, debug=True)
+
 
 
