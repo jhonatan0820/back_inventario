@@ -1,17 +1,28 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+
 def get_connection():
+    database_url = os.environ.get("back-inventario")
+
+    if not database_url:
+        raise Exception("DATABASE_URL no está definida")
+
+    parsed = urlparse(database_url)
+
     return mysql.connector.connect(
-        host="byrui10afnftlqj38wlc-mysql.services.clever-cloud.com",
-        user="uro8vvynewtyknux",
-        password="CmNVHboKXsz0YzcrNFFh",
-        database="byrui10afnftlqj38wlc"
+        host=parsed.hostname,
+        port=parsed.port,
+        user=parsed.username,
+        password=parsed.password,
+        database=parsed.path.lstrip("/")
     )
+
 
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
@@ -373,6 +384,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
