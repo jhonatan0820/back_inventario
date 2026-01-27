@@ -2,8 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import mysql.connector
 
-web: gunicorn app:app
-# CORS GLOBAL Y EXPLÍCITO
+app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
 def get_connection():
@@ -374,6 +373,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
