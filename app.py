@@ -226,6 +226,8 @@ def check_session():
         return jsonify({"ok": False}), 401
     return jsonify({"ok": True, "usuario": session["usuario"]})
 
+from flask import jsonify, session
+
 @app.route("/Logout", methods=["POST"])
 def logout():
     session.clear()
@@ -591,6 +593,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
