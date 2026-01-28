@@ -15,17 +15,6 @@ mail = Mail(app)
 app.secret_key = "DotacionesZambrano" 
 bcrypt = Bcrypt(app)
 
-def get_connection():
-    return mysql.connector.connect(
-        host=os.environ.get("DB_HOST"),
-        user=os.environ.get("DB_USER"),
-        password=os.environ.get("DB_PASS"),
-        database=os.environ.get("DB_NAME"),
-        port=int(os.environ.get("DB_PORT", 3306))
-    )
-
-
-
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -36,6 +25,23 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Inventario', 'jhonizam2023@gmail.com')
 
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
+
+
+def get_connection():
+    database_url = os.environ.get("DATABASE_URL")
+
+    if not database_url:
+        raise Exception("DATABASE_URL no está definida")
+
+    parsed = urlparse(database_url)
+
+    return mysql.connector.connect(
+        host=parsed.hostname,
+        user=parsed.username,
+        password=parsed.password,
+        database=parsed.path.lstrip("/"),
+        port=parsed.port or 3306
+    )
 
 
 @app.route("/RecuperarPassword", methods=["POST", "OPTIONS"])
