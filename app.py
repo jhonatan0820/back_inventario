@@ -71,11 +71,11 @@ def recuperar_password():
             return jsonify({"ok": False, "error": "Correo no registrado"}), 404
 
         token = str(uuid.uuid4())
-        expiracion = datetime.now() + timedelta(minutes=30)
+        expiracion = datetime.now() + timedelta(minutes=5)
 
         cursor.execute("""
-            INSERT INTO password_resets (idUsuario, token, expira)
-            VALUES (%s, %s, %s)
+            INSERT INTO password_resets (idUsuario, token, expira,id_estado)
+            VALUES (%s, %s, %s,4)
         """, (user["idUsuario"], token, expiracion))
 
         conn.commit()
@@ -89,7 +89,7 @@ def recuperar_password():
             <h3>Recuperación de contraseña</h3>
             <p>Haz clic para cambiar tu contraseña:</p>
             <a href="{link}">{link}</a>
-            <p>Este enlace expira en 30 minutos.</p>
+            <p>Este enlace expira en 5 minutos.</p>
             """
         )
 
@@ -126,7 +126,7 @@ def reset_password():
 
         cursor.execute("""
             SELECT * FROM password_resets
-            WHERE token=%s AND usado=0 AND expira > NOW()
+            WHERE token=%s AND id_estado=4 AND expira > NOW()
         """, (token,))
         reset = cursor.fetchone()
 
@@ -142,7 +142,7 @@ def reset_password():
         )
 
         cursor.execute(
-            "UPDATE password_resets SET usado=1 WHERE id=%s",
+            "UPDATE password_resets SET id_estado=3 WHERE id=%s",
             (reset["id"],)
         )
 
@@ -591,6 +591,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
