@@ -5,3 +5,4 @@ flask-bcrypt
 mysql-connector-python
 itsdangerous
 gunicorn
+requests
