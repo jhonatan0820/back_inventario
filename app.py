@@ -47,6 +47,38 @@ def get_connection():
         database=parsed.path.lstrip("/")
     )
 
+import requests
+import os
+
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+
+def enviar_correo(email, token):
+    url = "https://api.resend.com/emails"
+
+    payload = {
+        "from": "Inventario <no-reply@tu-dominio.com>",
+        "to": [email],
+        "subject": "Recuperar contraseña",
+        "html": f"""
+        <h2>Recuperación de contraseña</h2>
+        <p>Haz clic en el siguiente enlace para cambiar tu contraseña:</p>
+        <a href="https://frontinventario-production.up.railway.app/reset.html?token={token}">
+            Recuperar contraseña
+        </a>
+        <p>Este enlace expira en 15 minutos.</p>
+        """
+    }
+
+    headers = {
+        "Authorization": f"Bearer {RESEND_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    response = requests.post(url, json=payload, headers=headers, timeout=5)
+
+    if response.status_code not in (200, 201):
+        raise Exception(f"Error enviando correo: {response.text}")
+
 
 @app.route("/RecuperarPassword", methods=["POST", "OPTIONS"])
 def recuperar_password():
@@ -71,43 +103,41 @@ def recuperar_password():
         )
         user = cursor.fetchone()
 
+        # 🔐 No revelar si existe
         if not user:
-            return jsonify({"ok": False, "error": "Correo no registrado"}), 404
+            return jsonify({"ok": True})
 
         token = str(uuid.uuid4())
-        expiracion = datetime.now() + timedelta(minutes=5)
+        expiracion = datetime.utcnow() + timedelta(minutes=5)
 
         cursor.execute("""
-            INSERT INTO password_resets (idUsuario, token, expira,id_estado)
-            VALUES (%s, %s, %s,4)
+            INSERT INTO password_resets (idUsuario, token, expira, id_estado)
+            VALUES (%s, %s, %s, 4)
+            ON DUPLICATE KEY UPDATE
+                token = VALUES(token),
+                expira = VALUES(expira),
+                id_estado = 4
         """, (user["idUsuario"], token, expiracion))
 
         conn.commit()
 
-        link = f"https://frontinventario-production.up.railway.app/reset.html?token={token}"
-
-        msg = Message(
-            "Recuperar contraseña",
-            recipients=[email],
-            html=f"""
-            <h3>Recuperación de contraseña</h3>
-            <p>Haz clic para cambiar tu contraseña:</p>
-            <a href="{link}">{link}</a>
-            <p>Este enlace expira en 5 minutos.</p>
-            """
-        )
-
-        ##mail.send(msg)
+        try:
+            enviar_correo(email, token)
+        except Exception as mail_error:
+            print("ERROR enviando correo:", mail_error)
 
         return jsonify({"ok": True})
 
     except Exception as e:
-        if conn: conn.rollback()
-        return jsonify({"ok": False, "error": str(e)}), 500
+        if conn:
+            conn.rollback()
+        return jsonify({"ok": False, "error": "Error interno"}), 500
 
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @app.route("/ResetPassword", methods=["POST", "OPTIONS"])
@@ -593,6 +623,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
