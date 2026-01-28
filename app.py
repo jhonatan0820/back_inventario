@@ -57,7 +57,7 @@ def enviar_correo(email, token):
 
     payload = {
         "from": "Inventario <onboarding@resend.dev>",
-        "to": [email],
+        "to": ["jhonizam2023@gmail.com"],
         "subject": "Recuperar contraseña Inventario Dotaciones Zambrano",
         "html": f"""
         <h2>Recuperación de contraseña</h2>
@@ -623,6 +623,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
