@@ -176,7 +176,7 @@ def reset_password():
         )
 
         cursor.execute(
-            "UPDATE password_resets SET id_estado=3 WHERE id=%s",
+            "UPDATE password_resets SET id_estado=3 WHERE idPasswordResets=%s",
             (reset["id"],)
         )
 
@@ -623,6 +623,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
