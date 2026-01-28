@@ -32,8 +32,8 @@ app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
-app.config['MAIL_USERNAME'] = 'jhonizam2023@gmail.com'
-app.config['MAIL_PASSWORD'] = 'krpkavpojchxtzrn'  # 👈 SIN espacios
+app.config['MAIL_USERNAME'] = os.environ.get("MAIL_USER")
+app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASS")
 app.config['MAIL_DEFAULT_SENDER'] = ('Inventario', 'jhonizam2023@gmail.com')
 
 mail = Mail(app)
@@ -595,6 +595,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
