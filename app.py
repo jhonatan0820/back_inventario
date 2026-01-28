@@ -56,16 +56,16 @@ def enviar_correo(email, token):
     url = "https://api.resend.com/emails"
 
     payload = {
-        "from": "Inventario <no-reply@tu-dominio.com>",
+        "from": "Inventario <onboarding@resend.dev>",
         "to": [email],
-        "subject": "Recuperar contraseña",
+        "subject": "Recuperar contraseña Inventario Dotaciones Zambrano",
         "html": f"""
         <h2>Recuperación de contraseña</h2>
-        <p>Haz clic en el siguiente enlace para cambiar tu contraseña:</p>
+        <p>Haz clic en el siguiente enlace para cambiar su contraseña:</p>
         <a href="https://frontinventario-production.up.railway.app/reset.html?token={token}">
             Recuperar contraseña
         </a>
-        <p>Este enlace expira en 15 minutos.</p>
+        <p>Este enlace expira en 5 minutos.</p>
         """
     }
 
@@ -623,6 +623,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
