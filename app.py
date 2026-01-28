@@ -28,7 +28,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 
 
 def get_connection():
-    database_url = os.environ.get("DATABASE_URL")
+    database_url = os.environ.get("back-inventario")
 
     if not database_url:
         raise Exception("DATABASE_URL no está definida")
@@ -37,10 +37,10 @@ def get_connection():
 
     return mysql.connector.connect(
         host=parsed.hostname,
+        port=parsed.port,
         user=parsed.username,
         password=parsed.password,
-        database=parsed.path.lstrip("/"),
-        port=parsed.port or 3306
+        database=parsed.path.lstrip("/")
     )
 
 
@@ -591,6 +591,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
