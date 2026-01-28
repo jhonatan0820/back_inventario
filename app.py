@@ -10,7 +10,7 @@ import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})
+CORS(app,supports_credentials=True,origins=["https://frontinventario-production.up.railway.app"])
 mail = Mail(app)
 app.secret_key = "DotacionesZambrano" 
 bcrypt = Bcrypt(app)
@@ -593,6 +593,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
