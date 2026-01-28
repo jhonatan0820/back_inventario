@@ -1,9 +1,12 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, session
 from flask_cors import CORS
+from flask_mail import Mail, Message
+from flask_bcrypt import Bcrypt
+from itsdangerous import URLSafeTimedSerializer
 import mysql.connector
+import uuid
+from datetime import datetime, timedelta
 import os
-from urllib.parse import urlparse
-from flask_mail import Mail
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -595,6 +598,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
