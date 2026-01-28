@@ -3,10 +3,13 @@ from flask_cors import CORS
 import mysql.connector
 import os
 from urllib.parse import urlparse
+from flask_mail import Mail
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
-
+mail = Mail(app)
+app.secret_key = "DotacionesZambrano" 
+bcrypt = Bcrypt(app)
 
 def get_connection():
     database_url = os.environ.get("back-inventario")
@@ -24,6 +27,213 @@ def get_connection():
         database=parsed.path.lstrip("/")
     )
 
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'jhonizam2023@gmail.com'
+app.config['MAIL_PASSWORD'] = 'krpkavpojchxtzrn'  # 👈 SIN espacios
+app.config['MAIL_DEFAULT_SENDER'] = ('Inventario', 'jhonizam2023@gmail.com')
+
+mail = Mail(app)
+serializer = URLSafeTimedSerializer(app.secret_key)
+
+
+@app.route("/RecuperarPassword", methods=["POST", "OPTIONS"])
+def recuperar_password():
+    if request.method == "OPTIONS":
+        return "", 200
+
+    conn = cursor = None
+
+    try:
+        data = request.get_json()
+        email = data.get("email", "").strip()
+
+        if not email:
+            return jsonify({"ok": False, "error": "Email requerido"}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute(
+            "SELECT idUsuario FROM usuarios WHERE email=%s AND id_estado=1",
+            (email,)
+        )
+        user = cursor.fetchone()
+
+        if not user:
+            return jsonify({"ok": False, "error": "Correo no registrado"}), 404
+
+        token = str(uuid.uuid4())
+        expiracion = datetime.now() + timedelta(minutes=30)
+
+        cursor.execute("""
+            INSERT INTO password_resets (idUsuario, token, expira)
+            VALUES (%s, %s, %s)
+        """, (user["idUsuario"], token, expiracion))
+
+        conn.commit()
+
+        link = f"http://127.0.0.1:5500/reset.html?token={token}"
+
+        msg = Message(
+            "Recuperar contraseña",
+            recipients=[email],
+            html=f"""
+            <h3>Recuperación de contraseña</h3>
+            <p>Haz clic para cambiar tu contraseña:</p>
+            <a href="{link}">{link}</a>
+            <p>Este enlace expira en 30 minutos.</p>
+            """
+        )
+
+        mail.send(msg)
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/ResetPassword", methods=["POST", "OPTIONS"])
+def reset_password():
+    if request.method == "OPTIONS":
+        return "", 200
+
+    conn = cursor = None
+
+    try:
+        data = request.get_json()
+        token = data.get("token")
+        password = data.get("password")
+
+        if not token or not password:
+            return jsonify({"ok": False, "error": "Datos incompletos"}), 400
+
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT * FROM password_resets
+            WHERE token=%s AND usado=0 AND expira > NOW()
+        """, (token,))
+        reset = cursor.fetchone()
+
+        if not reset:
+            return jsonify({"ok": False, "error": "Token inválido o expirado"}), 400
+
+        hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+
+
+        cursor.execute(
+            "UPDATE usuarios SET password=%s WHERE idUsuario=%s",
+            (hashed, reset["idUsuario"])
+        )
+
+        cursor.execute(
+            "UPDATE password_resets SET usado=1 WHERE id=%s",
+            (reset["id"],)
+        )
+
+        conn.commit()
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        if conn: conn.rollback()
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    finally:
+        if cursor: cursor.close()
+        if conn: conn.close()
+
+
+@app.route("/CrearUsuario", methods=["POST"])
+def crear_usuario():
+    data = request.json
+    usuario = data["usuario"]
+    password = data["password"]
+
+    password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        INSERT INTO usuarios (usuario, password, id_estado)
+        VALUES (%s, %s, 1)
+    """, (usuario, password_hash))
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/Login", methods=["POST"])
+def login():
+    data = request.json
+    usuario = data.get("usuario")
+    password = data.get("password")
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT idUsuario, usuario, password
+        FROM usuarios
+        WHERE usuario = %s AND id_estado = 1
+    """, (usuario,))
+
+    user = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not user:
+        return jsonify({"ok": False, "error": "Usuario no existe o inactivo"}), 401
+
+    if not bcrypt.check_password_hash(user["password"], password):
+        return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
+
+    # guardar sesión
+    session["idUsuario"] = user["idUsuario"]
+    session["usuario"] = user["usuario"]
+
+    return jsonify({
+        "ok": True,
+        "usuario": user["usuario"]
+    })
+
+@app.route("/CheckSession")
+def check_session():
+    if "idUsuario" not in session:
+        return jsonify({"ok": False}), 401
+    return jsonify({"ok": True, "usuario": session["usuario"]})
+
+@app.route("/Logout", methods=["POST", "OPTIONS"])
+def logout():
+    if request.method == "OPTIONS":
+        return "", 200
+
+    session.clear()
+    return jsonify({"ok": True})
+
+
+def get_connection():
+    return mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="Zambrano1606",
+        database="inventario"
+    )
 
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
@@ -385,6 +595,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
