@@ -26,6 +26,10 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Inventario', 'jhonizam2023@gmail.com')
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
 
 def get_connection():
     database_url = os.environ.get("back-inventario")
@@ -587,6 +591,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
