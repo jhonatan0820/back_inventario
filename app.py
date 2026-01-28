@@ -84,7 +84,7 @@ def recuperar_password():
 
         conn.commit()
 
-        link = f"http://127.0.0.1:5500/reset.html?token={token}"
+        link = f"https://frontinventario-production.up.railway.app/reset.html?token={token}"
 
         msg = Message(
             "Recuperar contraseña",
@@ -593,6 +593,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
