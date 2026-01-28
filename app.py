@@ -230,14 +230,6 @@ def logout():
     return jsonify({"ok": True})
 
 
-def get_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="Zambrano1606",
-        database="inventario"
-    )
-
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
     conn = get_connection()
@@ -598,6 +590,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
