@@ -222,14 +222,10 @@ def check_session():
         return jsonify({"ok": False}), 401
     return jsonify({"ok": True, "usuario": session["usuario"]})
 
-@app.route("/Logout", methods=["POST", "OPTIONS"])
+@app.route("/Logout", methods=["POST"])
 def logout():
-    if request.method == "OPTIONS":
-        return "", 200
-
     session.clear()
     return jsonify({"ok": True})
-
 
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
@@ -591,6 +587,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
