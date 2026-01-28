@@ -7,6 +7,7 @@ import mysql.connector
 import uuid
 from datetime import datetime, timedelta
 import os
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
@@ -15,20 +16,14 @@ app.secret_key = "DotacionesZambrano"
 bcrypt = Bcrypt(app)
 
 def get_connection():
-    database_url = os.environ.get("back-inventario")
-
-    if not database_url:
-        raise Exception("DATABASE_URL no está definida")
-
-    parsed = urlparse(database_url)
-
     return mysql.connector.connect(
-        host=parsed.hostname,
-        port=parsed.port,
-        user=parsed.username,
-        password=parsed.password,
-        database=parsed.path.lstrip("/")
+        host=os.environ.get("DB_HOST"),
+        user=os.environ.get("DB_USER"),
+        password=os.environ.get("DB_PASS"),
+        database=os.environ.get("DB_NAME"),
+        port=int(os.environ.get("DB_PORT", 3306))
     )
+
 
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -590,6 +585,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
