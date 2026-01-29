@@ -10,7 +10,7 @@ import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-CORS(app)
+CORS(app,supports_credentials=True)
 mail = Mail(app)
 app.secret_key = "DotacionesZambrano" 
 bcrypt = Bcrypt(app)
@@ -255,8 +255,6 @@ def check_session():
     if "idUsuario" not in session:
         return jsonify({"ok": False}), 401
     return jsonify({"ok": True, "usuario": session["usuario"]})
-
-from flask import jsonify, session
 
 @app.route("/Logout", methods=["POST"])
 def logout():
@@ -623,6 +621,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
