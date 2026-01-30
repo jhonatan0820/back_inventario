@@ -297,11 +297,13 @@ def add_producto():
     cursor = None
 
     try:
+        print("get_jsysone")
         data = request.get_json(force=True)
 
         # ======================
         # DATOS
         # ======================
+        print("datos")
         id_categoria = data.get("id_categoria")
         nombre       = data.get("nombre", "").strip()
         marca        = data.get("marca")
@@ -312,6 +314,7 @@ def add_producto():
         # ======================
         # VALIDACIONES
         # ======================
+        print("validaciones")
         if not id_categoria:
             return jsonify({"ok": False, "error": "Categoría requerida"}), 400
 
@@ -334,12 +337,14 @@ def add_producto():
         # ======================
         # CONEXIÓN
         # ======================
+        print("conexion")
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         # ======================
         # MARCA (OPCIONAL)
         # ======================
+        print("marca")
         id_marca = None
         if marca:
             cursor.execute(
@@ -356,7 +361,7 @@ def add_producto():
                     (marca,)
                 )
                 id_marca = cursor.lastrowid
-
+        print("estilo")
         # ======================
         # ESTILO (OPCIONAL)
         # ======================
