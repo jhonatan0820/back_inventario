@@ -302,8 +302,7 @@ def add_producto():
         # ======================
         # DATOS
         # ======================
-        raw_categoria = data.get("id_categoria")
-        print("ID CATEGORIA RAW:", raw_categoria, type(raw_categoria))
+        id_categoria = data.get("id_categoria")
         nombre       = data.get("nombre", "").strip()
         marca        = data.get("marca")
         estilo       = data.get("estilo")
@@ -384,12 +383,14 @@ def add_producto():
         # ======================
         # PRODUCTO
         # ======================
-        cursor.execute("""
-        INSERT INTO productos
-        ( id_marca, id_estilo,nombre,id_estado, id_categoria)
-        VALUES (NULL, NULL,"TEST", 1, 1)"""
+        cursor.execute(
+            """
+                INSERT INTO productos
+                ( id_marca, id_estilo,nombre,id_estado, id_categoria)
+                VALUES (%s, %s,%s, 1, %s)
+            """,
+            (id_marca,id_estilo,nombre,id_categoria)
         )
-
         id_producto = cursor.lastrowid
 
         # ======================
@@ -640,6 +641,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
