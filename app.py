@@ -390,7 +390,7 @@ def add_producto():
         # ======================
         # PRODUCTO
         # ======================
-        print(f"antes del insert: {id_categoria}"))
+        print(f"antes del insert: {id_categoria}")
         cursor.execute(
             """
                 INSERT INTO productos
@@ -650,6 +650,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
