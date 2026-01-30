@@ -295,15 +295,12 @@ def get_productos():
 def add_producto():
     conn = None
     cursor = None
-
     try:
-        print("get_jsysone")
         data = request.get_json(force=True)
-
+        
         # ======================
         # DATOS
         # ======================
-        print("datos")
         id_categoria = data.get("id_categoria")
         nombre       = data.get("nombre", "").strip()
         marca        = data.get("marca")
@@ -311,10 +308,11 @@ def add_producto():
         id_color = int(data.get("id_color", 0))
         variantes    = data.get("variantes")
 
+
+        
         # ======================
         # VALIDACIONES
         # ======================
-        print("validaciones")
         if not id_categoria:
             return jsonify({"ok": False, "error": "Categoría requerida"}), 400
 
@@ -334,6 +332,7 @@ def add_producto():
             if estilo == "":
                 estilo = None
 
+        
         # ======================
         # CONEXIÓN
         # ======================
@@ -341,10 +340,10 @@ def add_producto():
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        
         # ======================
         # MARCA (OPCIONAL)
         # ======================
-        print("marca")
         id_marca = None
         if marca:
             cursor.execute(
@@ -361,26 +360,8 @@ def add_producto():
                     (marca,id_categoria,1)
                 )
                 id_marca = cursor.lastrowid
-                
-
-        # ======================
-        # PRODUCTO
-        # ======================
-        print("INSERT PRODUCTO →", nombre, id_marca, id_estilo, id_categoria)
-        print("TIPOS →", type(id_categoria))
 
         
-        cursor.execute(
-            """
-                INSERT INTO productos
-                (nombre, id_marca, id_estilo, id_categoria, id_estado)
-                VALUES (%s, %s, %s, %s, 1)
-            """,
-            (nombre, id_marca, id_estilo, id_categoria)
-        )
-        id_producto = cursor.lastrowid
-
-         print("estilo")
         # ======================
         # ESTILO (OPCIONAL)
         # ======================
@@ -397,12 +378,27 @@ def add_producto():
             else:
                 cursor.execute(
                     """
-                    INSERT INTO estilos (nombre, id_marca,id_producto)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO estilos (nombre, id_marca)
+                    VALUES (%s, %s)
                     """,
-                    (estilo, id_marca,id_producto)  # id_marca puede ser NULL
+                    (estilo, id_marca)  # id_marca puede ser NULL
                 )
                 id_estilo = cursor.lastrowid
+
+        
+        # ======================
+        # PRODUCTO
+        # ======================
+        cursor.execute(
+            """
+                INSERT INTO productos
+                (nombre, id_marca, id_estilo, id_categoria, id_estado)
+                VALUES (%s, %s, %s, %s, 1)
+            """,
+            (nombre, id_marca, id_estilo, id_categoria)
+        )
+        id_producto = cursor.lastrowid
+
         
         # ======================
         # VARIANTES
@@ -652,6 +648,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
