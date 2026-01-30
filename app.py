@@ -300,7 +300,7 @@ def add_producto():
 
         id_categoria = data.get("id_categoria")
         nombre = data.get("nombre", "").strip()
-        marca  = data.get("marca", "").strip()
+        marca  = data.get("marca")
         estilo = data.get("estilo")
         id_color = data.get("id_color")
         variantes = data.get("variantes")
@@ -312,8 +312,10 @@ def add_producto():
         if not nombre:
             return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
-        if not marca:
-            return jsonify({"ok": False, "error": "Marca requerida"}), 400
+        if marca:
+            marca = marca.strip()
+            if marca == "":
+                marca = None
 
         if not variantes:
             return jsonify({"ok": False, "error": "Debe tener variantes"}), 400
@@ -330,20 +332,28 @@ def add_producto():
         # ======================
         # MARCA
         # ======================
-        cursor.execute(
-            "SELECT id_marca FROM marcas WHERE nombre = (%s)",
-            (marca,)
-        )
-        row = cursor.fetchone()
-
-        if row:
-            id_marca = row["id_marca"]
-        else:
-            cursor.execute(
-                "INSERT INTO marcas (nombre) VALUES (%s)",
-                (marca,)
-            )
-            id_marca = cursor.lastrowid
+        id_marca= None
+            if marca:
+                cursor.execute(
+                    "SELECT id_marca FROM marcas WHERE nombre = (%s)",
+                    (marca,)
+                )
+                row = cursor.fetchone()
+    
+                if row:
+                    id_marca = row["id_marca"]
+                else:
+                    cursor.execute(
+                        "INSERT INTO marcas (nombre) VALUES (%s)",
+                        (marca,)
+                    )
+                    id_marca = cursor.lastrowid
+            else:
+                cursor.execute(
+                    "SELECT id_marca FROM marcas WHERE nombre = (%s)",
+                    (marca,)
+                )
+                id_marca = cursor.fetchone()
 
         # ======================
         # ESTILO (OPCIONAL)
@@ -621,6 +631,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
