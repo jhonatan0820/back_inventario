@@ -383,9 +383,11 @@ def add_producto():
         # ======================
         # PRODUCTO
         # ======================
+        cursor.execute("""
         INSERT INTO productos
         ( id_marca, id_estilo,nombre,id_estado, id_categoria)
-        VALUES (NULL, NULL,"TEST", 1, 1);
+        VALUES (NULL, NULL,"TEST", 1, 1)"""
+        )
 
         id_producto = cursor.lastrowid
 
