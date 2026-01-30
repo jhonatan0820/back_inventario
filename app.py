@@ -411,8 +411,12 @@ def add_producto():
             stock  = v["stock"]
 
             cursor.execute(
-                "SELECT id_talla FROM tallas WHERE valor = %s",
-                (talla,)
+                """
+                SELECT id_talla
+                FROM tallas
+                WHERE valor = %s AND id_categoria = %s AND id_estado = 1
+                """,
+                (talla, id_categoria)
             )
             row = cursor.fetchone()
 
@@ -420,10 +424,14 @@ def add_producto():
                 id_talla = row["id_talla"]
             else:
                 cursor.execute(
-                    "INSERT INTO tallas (valor) VALUES (%s)",
-                    (talla,)
+                    """
+                    INSERT INTO tallas (valor, id_categoria, id_estado)
+                    VALUES (%s, %s, 1)
+                    """,
+                    (talla, id_categoria)
                 )
                 id_talla = cursor.lastrowid
+
 
             cursor.execute("""
                 INSERT INTO variantes
@@ -650,6 +658,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
