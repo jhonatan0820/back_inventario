@@ -289,6 +289,8 @@ def get_productos():
     conn.close()
 
     return jsonify(data)
+
+
 @app.route("/AddProducto", methods=["POST"])
 def add_producto():
     conn = None
@@ -414,9 +416,9 @@ def add_producto():
 
             cursor.execute("""
                 INSERT INTO variantes
-                (id_producto, id_color, id_talla, precio, stock, id_estado)
-                VALUES (%s, %s, %s, %s, %s, 1)
-            """, (id_producto, id_color, id_talla, precio, stock))
+                (id_producto, id_color, id_talla, precio, stock, id_estado,id_categoria)
+                VALUES (%s, %s, %s, %s, %s, 1,%s)
+            """, (id_producto, id_color, id_talla, precio, stock,id_categoria))
 
         conn.commit()
         return jsonify({"ok": True})
@@ -637,6 +639,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
