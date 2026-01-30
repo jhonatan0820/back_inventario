@@ -300,11 +300,11 @@ def add_producto():
         # ======================
         # DATOS
         # ======================
-        id_categoria = data.get("id_categoria")
+        id_categoria = int(data.get("id_categoria", 0))
         nombre       = data.get("nombre", "").strip()
         marca        = data.get("marca")
         estilo       = data.get("estilo")
-        id_color     = data.get("id_color")
+        id_color = int(data.get("id_color", 0))
         variantes    = data.get("variantes")
 
         # ======================
@@ -637,6 +637,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
