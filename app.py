@@ -553,7 +553,7 @@ def add_color():
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO colores (nombre) VALUES (%s)",
+        "INSERT INTO colores (nombre,id_estado) VALUES (%s,1)",
         (nombre,)
     )
 
@@ -569,7 +569,7 @@ def get_colores():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT id_color, nombre FROM colores ORDER BY nombre")
+    cursor.execute("SELECT id_color, nombre FROM colores WHERD id_estado = 1 ORDER BY nombre")
     data = cursor.fetchall()
 
     cursor.close()
@@ -637,6 +637,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
