@@ -362,29 +362,6 @@ def add_producto():
                 )
                 id_marca = cursor.lastrowid
                 
-        print("estilo")
-        # ======================
-        # ESTILO (OPCIONAL)
-        # ======================
-        id_estilo = None
-        if estilo:
-            cursor.execute(
-                "SELECT id_estilo FROM estilos WHERE nombre = %s",
-                (estilo,)
-            )
-            row = cursor.fetchone()
-
-            if row:
-                id_estilo = row["id_estilo"]
-            else:
-                cursor.execute(
-                    """
-                    INSERT INTO estilos (nombre, id_marca)
-                    VALUES (%s, %s)
-                    """,
-                    (estilo, id_marca)  # id_marca puede ser NULL
-                )
-                id_estilo = cursor.lastrowid
 
         # ======================
         # PRODUCTO
@@ -403,6 +380,30 @@ def add_producto():
         )
         id_producto = cursor.lastrowid
 
+         print("estilo")
+        # ======================
+        # ESTILO (OPCIONAL)
+        # ======================
+        id_estilo = None
+        if estilo:
+            cursor.execute(
+                "SELECT id_estilo FROM estilos WHERE nombre = %s",
+                (estilo,)
+            )
+            row = cursor.fetchone()
+
+            if row:
+                id_estilo = row["id_estilo"]
+            else:
+                cursor.execute(
+                    """
+                    INSERT INTO estilos (nombre, id_marca,id_producto)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (estilo, id_marca,id_producto)  # id_marca puede ser NULL
+                )
+                id_estilo = cursor.lastrowid
+        
         # ======================
         # VARIANTES
         # ======================
@@ -651,6 +652,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
