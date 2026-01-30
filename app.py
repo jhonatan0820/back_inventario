@@ -384,8 +384,8 @@ def add_producto():
         # PRODUCTO
         # ======================
         INSERT INTO productos
-        (nombre, id_marca, id_estilo, id_categoria, id_estado)
-        VALUES ('TEST', NULL, NULL, 1, 1);
+        ( id_marca, id_estilo,nombre,id_estado, id_categoria)
+        VALUES (NULL, NULL,"TEST", 1, 1);
 
         id_producto = cursor.lastrowid
 
@@ -637,6 +637,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
