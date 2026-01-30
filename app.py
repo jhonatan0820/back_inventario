@@ -62,7 +62,7 @@ def enviar_correo(email, token):
         "html": f"""
         <h2>Recuperación de contraseña</h2>
         <p>Haz clic en el siguiente enlace para cambiar su contraseña:</p>
-        <a href="https://frontinventario-production.up.railway.app/reset.html?token={token}">
+        <a href="https://dotacioneszambrano.com/reset.html?token={token}">
             Recuperar contraseña
         </a>
         <p>Este enlace expira en 5 minutos.</p>
@@ -651,6 +651,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
