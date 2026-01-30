@@ -357,7 +357,7 @@ def add_producto():
                 id_marca = row["id_marca"]
             else:
                 cursor.execute(
-                    "INSERT INTO marcas (nombre,id_categoria,id_estado) VALUES (%s,%s)",
+                    "INSERT INTO marcas (nombre,id_categoria,id_estado) VALUES (%s,%s,%s)",
                     (marca,id_categoria,1)
                 )
                 id_marca = cursor.lastrowid
@@ -651,6 +651,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
