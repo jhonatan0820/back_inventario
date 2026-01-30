@@ -383,8 +383,8 @@ def add_producto():
         # ======================
         # PRODUCTO
         # ======================
-    print("INSERT PRODUCTO →", nombre, id_marca, id_estilo, id_categoria)
-    print("TIPOS →", type(id_categoria))
+        print("INSERT PRODUCTO →", nombre, id_marca, id_estilo, id_categoria)
+        print("TIPOS →", type(id_categoria))
 
         
         cursor.execute(
@@ -645,6 +645,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
