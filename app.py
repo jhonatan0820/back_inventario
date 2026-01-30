@@ -289,7 +289,6 @@ def get_productos():
     conn.close()
 
     return jsonify(data)
-
 @app.route("/AddProducto", methods=["POST"])
 def add_producto():
     conn = None
@@ -298,62 +297,63 @@ def add_producto():
     try:
         data = request.get_json(force=True)
 
+        # ======================
+        # DATOS
+        # ======================
         id_categoria = data.get("id_categoria")
-        nombre = data.get("nombre", "").strip()
-        marca  = data.get("marca")
-        estilo = data.get("estilo")
-        id_color = data.get("id_color")
-        variantes = data.get("variantes")
-        
+        nombre       = data.get("nombre", "").strip()
+        marca        = data.get("marca")
+        estilo       = data.get("estilo")
+        id_color     = data.get("id_color")
+        variantes    = data.get("variantes")
 
+        # ======================
+        # VALIDACIONES
+        # ======================
         if not id_categoria:
             return jsonify({"ok": False, "error": "Categoría requerida"}), 400
 
         if not nombre:
             return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
+        if not variantes or len(variantes) == 0:
+            return jsonify({"ok": False, "error": "Debe tener variantes"}), 400
+
         if marca:
             marca = marca.strip()
             if marca == "":
                 marca = None
-
-        if not variantes:
-            return jsonify({"ok": False, "error": "Debe tener variantes"}), 400
 
         if estilo:
             estilo = estilo.strip()
             if estilo == "":
                 estilo = None
 
+        # ======================
+        # CONEXIÓN
+        # ======================
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # ======================
+        # MARCA (OPCIONAL)
+        # ======================
+        id_marca = None
+        if marca:
+            cursor.execute(
+                "SELECT id_marca FROM marcas WHERE nombre = %s",
+                (marca,)
+            )
+            row = cursor.fetchone()
 
-        # ======================
-        # MARCA
-        # ======================
-        id_marca= None
-            if marca:
-                cursor.execute(
-                    "SELECT id_marca FROM marcas WHERE nombre = (%s)",
-                    (marca,)
-                )
-                row = cursor.fetchone()
-    
-                if row:
-                    id_marca = row["id_marca"]
-                else:
-                    cursor.execute(
-                        "INSERT INTO marcas (nombre) VALUES (%s)",
-                        (marca,)
-                    )
-                    id_marca = cursor.lastrowid
+            if row:
+                id_marca = row["id_marca"]
             else:
                 cursor.execute(
-                    "SELECT id_marca FROM marcas WHERE nombre = (%s)",
+                    "INSERT INTO marcas (nombre) VALUES (%s)",
                     (marca,)
                 )
-                id_marca = cursor.fetchone()
+                id_marca = cursor.lastrowid
 
         # ======================
         # ESTILO (OPCIONAL)
@@ -361,8 +361,8 @@ def add_producto():
         id_estilo = None
         if estilo:
             cursor.execute(
-                "SELECT id_estilo FROM estilos WHERE nombre = %s AND id_marca = %s",
-                (estilo, id_marca)
+                "SELECT id_estilo FROM estilos WHERE nombre = %s",
+                (estilo,)
             )
             row = cursor.fetchone()
 
@@ -370,8 +370,11 @@ def add_producto():
                 id_estilo = row["id_estilo"]
             else:
                 cursor.execute(
-                    "INSERT INTO estilos (id_marca, nombre) VALUES (%s, %s)",
-                    (id_marca, estilo)
+                    """
+                    INSERT INTO estilos (nombre, id_marca)
+                    VALUES (%s, %s)
+                    """,
+                    (estilo, id_marca)  # id_marca puede ser NULL
                 )
                 id_estilo = cursor.lastrowid
 
@@ -379,8 +382,9 @@ def add_producto():
         # PRODUCTO
         # ======================
         cursor.execute("""
-            INSERT INTO productos (nombre, id_marca, id_estilo, id_estado,id_categoria)
-            VALUES (%s, %s, %s, 1, %s)
+            INSERT INTO productos
+            (nombre, id_marca, id_estilo, id_categoria, id_estado)
+            VALUES (%s, %s, %s, %s, 1)
         """, (nombre, id_marca, id_estilo, id_categoria))
 
         id_producto = cursor.lastrowid
@@ -420,12 +424,14 @@ def add_producto():
     except Exception as e:
         if conn:
             conn.rollback()
-        print("🔥 ERROR ADD PRODUCTO:", e)
+        print("ERROR AGREGANDO PRODUCTO:", e)
         return jsonify({"ok": False, "error": str(e)}), 500
 
     finally:
-        if cursor: cursor.close()
-        if conn: conn.close()
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @app.route("/GetCategorias")
@@ -631,6 +637,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
