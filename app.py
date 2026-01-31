@@ -269,10 +269,10 @@ def login():
 
 @app.route("/CheckSession")
 def check_session():
-    if "id_usuario" not in session:
+    if "idUsuario" not in session:
         return jsonify({"ok": False}), 401
 
-    return jsonify({"ok": True})
+    return jsonify({"ok": True}), 200
 
 
 @app.route("/Logout", methods=["POST"])
@@ -696,6 +696,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
