@@ -101,8 +101,8 @@ def get_tallas_validas():
     cursor.execute("""
         SELECT DISTINCT t.valor AS talla
         FROM variantes v
-        JOIN tallas t ON v.id_talla = t.id_talla
-        WHERE v.id_estado = 1
+        INNER JOIN tallas t ON v.id_talla = t.id_talla
+        WHERE v.id_estado = 1 and t.id_estado = 1
         ORDER BY t.valor
     """)
 
@@ -738,6 +738,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
