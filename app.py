@@ -10,7 +10,19 @@ import os
 from urllib.parse import urlparse
 
 app = Flask(__name__)
-CORS(app,supports_credentials=True)
+CORS(
+    app,
+    supports_credentials=True,
+    resources={
+        r"/*": {
+            "origins": [
+                "https://frontinventario-production.up.railway.app",
+                "http://127.0.0.1:5500",
+                "http://localhost:5500"
+            ]
+        }
+    }
+)
 mail = Mail(app)
 app.secret_key = "DotacionesZambrano" 
 bcrypt = Bcrypt(app)
@@ -486,9 +498,6 @@ def actualizar_stock():
     id_variante   = data.get("id_variante")
     nuevo_stock   = data.get("nuevo_stock")
 
-     if "id_usuario" not in session:
-        return jsonify({"ok": False, "error": "Sesión expirada"}), 401
-
     if id_variante is None or nuevo_stock is None:
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
@@ -667,6 +676,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
