@@ -28,7 +28,8 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 
 app.config.update(
     SESSION_COOKIE_SAMESITE="None",
-    SESSION_COOKIE_SECURE=True
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True
 )
 
 def get_connection():
@@ -236,7 +237,7 @@ def login():
     conn.close()
 
     if not user:
-        return jsonify({"ok": False, "error": "Usuario no existe o inactivo"}), 401
+        return jsonify({"ok": False, "error": "El usuario noesta registrado"}), 401
 
     if not bcrypt.check_password_hash(user["password"], password):
         return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
@@ -252,9 +253,11 @@ def login():
 
 @app.route("/CheckSession")
 def check_session():
-    if "idUsuario" not in session:
-        return jsonify({"ok": False}), 401
-    return jsonify({"ok": True, "usuario": session["usuario"]})
+    rutas_publicas = ["/login", "/Logout"]
+    if request.path in rutas_publicas:
+        return
+    if "id_usuario" not in session:
+        return jsonify({"ok": False, "error": "No autenticado"}), 401
 
 @app.route("/Logout", methods=["POST"])
 def logout():
@@ -483,6 +486,9 @@ def actualizar_stock():
     id_variante   = data.get("id_variante")
     nuevo_stock   = data.get("nuevo_stock")
 
+     if "id_usuario" not in session:
+        return jsonify({"ok": False, "error": "Sesión expirada"}), 401
+
     if id_variante is None or nuevo_stock is None:
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
@@ -661,6 +667,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
