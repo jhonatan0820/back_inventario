@@ -93,6 +93,33 @@ def enviar_correo(email, token):
     if response.status_code not in (200, 201):
         raise Exception(f"Error enviando correo: {response.text}")
 
+@app.route("/GetTallasPorCategoriaGenero")
+def get_tallas_por_categoria_genero():
+    id_categoria = request.args.get("id_categoria")
+    id_genero = request.args.get("id_genero")
+
+    if not id_categoria or not id_genero:
+        return jsonify([])
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT valor
+        FROM tallas
+        WHERE id_categoria = %s
+          AND id_genero = %s
+          AND id_estado = 1
+        ORDER BY valor
+    """, (id_categoria, id_genero))
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
+
 @app.route("/GetTallasValidas")
 def get_tallas_validas():
     conn = get_connection()
@@ -741,4 +768,5 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
