@@ -93,6 +93,25 @@ def enviar_correo(email, token):
     if response.status_code not in (200, 201):
         raise Exception(f"Error enviando correo: {response.text}")
 
+@app.route("/GetTallasValidas")
+def get_tallas_validas():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT t.valor AS talla
+        FROM variantes v
+        JOIN tallas t ON v.id_talla = t.id_talla
+        WHERE v.id_estado = 1
+        ORDER BY t.valor
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
 
 @app.route("/GetNombresProductos")
 def get_nombres_productos():
@@ -719,6 +738,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
