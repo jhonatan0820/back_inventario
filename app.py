@@ -229,8 +229,11 @@ def crear_usuario():
     return jsonify({"ok": True})
 
 
-@app.route("/Login", methods=["POST"])
+@app.route("/Login", methods=["POST", "OPTIONS"])
 def login():
+    if request.method == "OPTIONS":
+        return "", 200
+        
     data = request.json
     usuario = data.get("usuario")
     password = data.get("password")
@@ -676,6 +679,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
