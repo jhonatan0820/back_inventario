@@ -287,6 +287,7 @@ def get_productos():
 
     cursor.execute("""
         SELECT
+            p.id_producto AS id_producto,
             p.nombre AS nomproducto,
             cat.nombre AS categoria,
             v.id_variante AS id_variante,
@@ -696,6 +697,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
