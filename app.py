@@ -107,8 +107,8 @@ def get_tallas_por_categoria_genero():
     cursor.execute("""
         SELECT DISTINCT valor,id_talla 
         FROM tallas
-        WHERE id_categoria = 1
-          AND id_genero = 3
+        WHERE id_categoria = %s
+          AND id_genero = %s
           AND id_estado = 1
         ORDER BY id_talla
     """, (id_categoria, id_genero))
@@ -768,6 +768,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
