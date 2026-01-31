@@ -508,9 +508,9 @@ def add_producto():
                 """
                 SELECT id_talla
                 FROM tallas
-                WHERE valor = %s AND id_categoria = %s AND id_estado = 1
+                WHERE valor = %s AND id_categoria = %s AND id_genero = %s AND id_estado = 1
                 """,
-                (talla, id_categoria)
+                (talla, id_categoria,id_genero)
             )
             row = cursor.fetchone()
 
@@ -768,6 +768,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
