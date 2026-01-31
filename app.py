@@ -324,8 +324,8 @@ def get_productos():
         LEFT JOIN marcas m ON p.id_marca = m.id_marca
         JOIN categorias cat ON p.id_categoria = cat.id_categoria
         LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
-        JOIN colores c ON v.id_color = c.id_color
-        JOIN tallas t ON v.id_talla = t.id_talla
+        LEFT JOIN colores c ON v.id_color = c.id_color
+        LEFT JOIN tallas t ON v.id_talla = t.id_talla
         WHERE p.id_estado = 1 and v.id_estado = 1
     """)
 
@@ -719,6 +719,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
