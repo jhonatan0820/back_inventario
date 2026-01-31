@@ -268,11 +268,11 @@ def login():
 
 @app.route("/CheckSession")
 def check_session():
-    rutas_publicas = ["/login", "/Logout"]
-    if request.path in rutas_publicas:
-        return
     if "id_usuario" not in session:
-        return jsonify({"ok": False, "error": "No autenticado"}), 401
+        return jsonify({"ok": False}), 401
+
+    return jsonify({"ok": True})
+
 
 @app.route("/Logout", methods=["POST"])
 def logout():
@@ -605,6 +605,22 @@ def add_color():
 
     return jsonify({"ok": True})
 
+@app.route("/GetGeneros", methods=["GET"])
+def get_generos():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id_genero, nombre
+        FROM generos
+        WHERE id_estado = 1
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 @app.route("/GetColores")
 def get_colores():
@@ -679,6 +695,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
