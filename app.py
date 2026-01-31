@@ -321,7 +321,7 @@ def get_productos():
             v.stock AS stock
         FROM variantes v
         JOIN productos p ON v.id_producto = p.id_producto
-        JOIN marcas m ON p.id_marca = m.id_marca
+        LEFT JOIN marcas m ON p.id_marca = m.id_marca
         JOIN categorias cat ON p.id_categoria = cat.id_categoria
         LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
         JOIN colores c ON v.id_color = c.id_color
@@ -719,6 +719,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
