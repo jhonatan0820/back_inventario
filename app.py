@@ -16,6 +16,7 @@ CORS(
     resources={
         r"/*": {
             "origins": [
+                "https://dotacioneszambrano.com",
                 "https://frontinventario-production.up.railway.app",
                 "http://127.0.0.1:5500",
                 "http://localhost:5500"
@@ -695,6 +696,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
