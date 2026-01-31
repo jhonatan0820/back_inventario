@@ -93,15 +93,18 @@ def enviar_correo(email, token):
     if response.status_code not in (200, 201):
         raise Exception(f"Error enviando correo: {response.text}")
 
+
 @app.route("/GetNombresProductos")
 def get_nombres_productos():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT DISTINCT nombre
+        SELECT
+            TRIM(LOWER(nombre)) AS nombre
         FROM productos
         WHERE id_estado = 1
+        GROUP BY TRIM(LOWER(nombre))
         ORDER BY nombre
     """)
 
@@ -110,6 +113,7 @@ def get_nombres_productos():
     conn.close()
 
     return jsonify(data)
+
 
 
 @app.route("/RecuperarPassword", methods=["POST", "OPTIONS"])
@@ -715,6 +719,7 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
