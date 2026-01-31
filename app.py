@@ -110,7 +110,7 @@ def get_tallas_por_categoria_genero():
         WHERE id_categoria = %s
           AND id_genero = %s
           AND id_estado = 1
-        ORDER BY valor
+        ORDER BY id_talla
     """, (id_categoria, id_genero))
 
     data = cursor.fetchall()
@@ -768,5 +768,6 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
