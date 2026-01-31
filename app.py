@@ -365,6 +365,7 @@ def add_producto():
         # ======================
         # DATOS
         # ======================
+        id_genero   = data.get("id_genero")
         id_categoria = data.get("id_categoria")
         print(f"del front llego esto: {id_categoria}")
         nombre       = data.get("nombre", "").strip()
@@ -378,6 +379,9 @@ def add_producto():
         # ======================
         # VALIDACIONES
         # ======================
+        if not id_genero:
+            return jsonify({"ok": False, "error": "Género requerido"}), 400
+        
         if not id_categoria:
             return jsonify({"ok": False, "error": "Categoría requerida"}), 400
 
@@ -401,7 +405,6 @@ def add_producto():
         # ======================
         # CONEXIÓN
         # ======================
-        print("conexion")
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
@@ -458,10 +461,10 @@ def add_producto():
         cursor.execute(
             """
                 INSERT INTO productos
-                (nombre, id_marca, id_estilo, id_categoria, id_estado)
-                VALUES (%s, %s, %s, %s, %s)
+                (nombre, id_marca, id_estilo, id_categoria, id_genero, id_estado)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """,
-            (nombre, id_marca, id_estilo, id_categoria,1)
+            (nombre, id_marca, id_estilo, id_categoria,id_genero,1)
         )
         id_producto = cursor.lastrowid
 
@@ -489,10 +492,10 @@ def add_producto():
             else:
                 cursor.execute(
                     """
-                    INSERT INTO tallas (valor, id_categoria, id_estado)
-                    VALUES (%s, %s, 1)
+                    INSERT INTO tallas (valor, id_categoria, id_genero, id_estado)
+                    VALUES (%s, %s, %s, 1)
                     """,
-                    (talla, id_categoria)
+                    (talla, id_categoria, id_genero)
                 )
                 id_talla = cursor.lastrowid
 
@@ -684,7 +687,7 @@ def get_tallas():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT id_talla, valor FROM tallas ORDER BY valor")
+    cursor.execute("SELECT id_talla, valor, id_genero FROM tallas ORDER BY valor")
     data = cursor.fetchall()
 
     cursor.close()
@@ -738,77 +741,4 @@ def delete_productos():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
