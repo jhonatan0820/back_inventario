@@ -126,12 +126,10 @@ def get_estilos_unicos():
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT 
-            MIN(id_estilo) AS id_estilo,
-            nombre
+        SELECT
+            TRIM(LOWER(nombre)) AS nombre
         FROM estilos
-        WHERE id_estado = 1
-        GROUP BY LOWER(TRIM(nombre))
+        GROUP BY TRIM(LOWER(nombre))
         ORDER BY nombre
     """)
 
@@ -821,6 +819,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
