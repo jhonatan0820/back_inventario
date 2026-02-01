@@ -120,6 +120,28 @@ def get_tallas_por_categoria_genero():
     return jsonify(data)
 
 
+@app.route("/GetEstilosUnicos")
+def get_estilos_unicos():
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT 
+            MIN(id_estilo) AS id_estilo,
+            nombre
+        FROM estilos
+        WHERE id_estado = 1
+        GROUP BY LOWER(TRIM(nombre))
+        ORDER BY nombre
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
+
 @app.route("/GetTallasValidas")
 def get_tallas_validas():
     conn = get_connection()
@@ -799,6 +821,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
