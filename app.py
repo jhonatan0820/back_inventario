@@ -760,37 +760,37 @@ def delete_productos():
         })
 
     except Exception as e:
-        print("🔥 ERROR DELETE:", e)
+        print("ERROR BORRANDO EL PREDUCTO:", e)
         return jsonify({"error": str(e)}), 500
-
 
 
 @app.route("/InformationGeneral")
 def reporte_general():
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
 
     try:
-        # Recibimos filtros opcionales de la URL, si no existen son None (NULL en SQL)
         cat = request.args.get('categoria')
         prod = request.args.get('producto')
         talla = request.args.get('talla')
         estilo = request.args.get('estilo')
-        
+
         args = (cat, prod, talla, estilo)
 
-        # Ejecutamos el procedimiento
         cursor.callproc("railway.InformationGeneral", args)
 
-        # Capturamos los resultados
-        data = []
         for result in cursor.stored_results():
-            data = result.fetchall()
+            columns = result.column_names
+            rows = result.fetchall()
 
-        return jsonify(data)
-    
+        return jsonify({
+            "columns": columns,
+            "rows": rows
+        })
+
     except Exception as e:
-        return f"Error al generar el reporte: {str(e)}", 500
+        return {"error": str(e)}, 500
+
     finally:
         cursor.close()
         conn.close()
@@ -799,6 +799,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
