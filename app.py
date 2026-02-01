@@ -119,17 +119,16 @@ def get_tallas_por_categoria_genero():
 
     return jsonify(data)
 
-
 @app.route("/GetEstilosUnicos")
 def get_estilos_unicos():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT
+        SELECT DISTINCT
             TRIM(LOWER(nombre)) AS nombre
         FROM estilos
-        GROUP BY TRIM(LOWER(nombre))
+        WHERE id_estado = 1
         ORDER BY nombre
     """)
 
@@ -138,6 +137,7 @@ def get_estilos_unicos():
     conn.close()
 
     return jsonify(data)
+
 
 
 @app.route("/GetTallasValidas")
@@ -819,6 +819,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
