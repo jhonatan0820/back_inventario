@@ -39,8 +39,8 @@ app.config['MAIL_DEFAULT_SENDER'] = ('Inventario', 'jhonizam2023@gmail.com')
 mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 
+
 app.config.update(
-    session.permanent = True
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
@@ -326,7 +326,7 @@ def login():
     if request.method == "OPTIONS":
         return "", 200
 
-    session.permanent = True
+    
     data = request.json
     usuario = data.get("usuario")
     password = data.get("password")
@@ -351,6 +351,7 @@ def login():
         return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
 
     # guardar sesión
+    session.permanent = True
     session["idUsuario"] = user["idUsuario"]
     session["usuario"] = user["usuario"]
 
@@ -832,6 +833,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
