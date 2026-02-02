@@ -791,7 +791,7 @@ def reporte_general():
     try:        
 
         def clean(val):
-        return None if val in [None, "", "null", "undefined"] else val
+            return None if val in [None, "", "null", "undefined"] else val
         
         args = (
             clean(request.args.get('categoria')),
@@ -828,6 +828,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
