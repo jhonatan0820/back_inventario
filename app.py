@@ -790,6 +790,9 @@ def reporte_general():
     cursor = conn.cursor()
 
     try:
+        def clean_arg(val):
+            return None if val in [None, "", "null", "undefined"] else val
+            
         cat = request.args.get('categoria')
         prod = request.args.get('producto')
         talla = request.args.get('talla')
@@ -820,6 +823,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
