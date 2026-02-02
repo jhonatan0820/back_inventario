@@ -40,6 +40,7 @@ mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 app.config.update(
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True
@@ -322,7 +323,8 @@ def crear_usuario():
 def login():
     if request.method == "OPTIONS":
         return "", 200
-        
+
+    session.permanent = True
     data = request.json
     usuario = data.get("usuario")
     password = data.get("password")
@@ -828,6 +830,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
