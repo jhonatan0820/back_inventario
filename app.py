@@ -40,11 +40,13 @@ mail = Mail(app)
 serializer = URLSafeTimedSerializer(app.secret_key)
 
 app.config.update(
+    session.permanent = True
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True
 )
+
 
 def get_connection():
     database_url = os.environ.get("back-inventario")
@@ -830,6 +832,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
