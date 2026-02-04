@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import os
 from urllib.parse import urlparse
 
+
 app = Flask(__name__)
 CORS(
     app,
@@ -833,6 +834,7 @@ def reporte_general():
 if __name__ == "__main__":
     import os
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
 
 
