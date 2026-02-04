@@ -355,7 +355,7 @@ def login():
     session.permanent = True
     session["idUsuario"] = user["idUsuario"]
     session["usuario"] = user["usuario"]
-
+    print('holaa')
     return jsonify({
         "ok": True,
         "usuario": user["usuario"]
@@ -833,4 +833,5 @@ def reporte_general():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+
 
