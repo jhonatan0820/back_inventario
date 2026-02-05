@@ -39,7 +39,6 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_DOMAIN=".dotacioneszambrano.com",
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
@@ -918,6 +917,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
