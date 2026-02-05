@@ -39,7 +39,7 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_DOMAIN=None,  # Importante para Safari
+    SESSION_COOKIE_DOMAIN=".dotacioneszambrano.com",
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
@@ -90,6 +90,7 @@ def after_request(response):
     origin = request.headers.get('Origin')
     
     allowed_origins = [
+        "https://api.dotacioneszambrano.com",
         "https://dotacioneszambrano.com",
         "https://frontinventario-production.up.railway.app",
         "http://127.0.0.1:5500",
@@ -917,6 +918,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
