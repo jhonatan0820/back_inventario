@@ -27,10 +27,13 @@ CORS(
                 "https://frontinventario-production.up.railway.app",
                 "http://127.0.0.1:5500",
                 "http://localhost:5500"
-            ]
+            ],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
         }
     }
 )
+
 
 # ============================================
 # CONFIGURACIÓN DE SESIÓN OPTIMIZADA
@@ -123,36 +126,8 @@ def enviar_correo(email, token):
 # RUTAS - AUTENTICACIÓN
 # ============================================
 
-@app.route("/CrearUsuario", methods=["POST", "OPTIONS"])
-def crear_usuario():
-    if request.method == "OPTIONS":
-        return "", 200
-        
-    data = request.json
-    usuario = data["usuario"]
-    password = data["password"]
-
-    password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        INSERT INTO usuarios (usuario, password, id_estado)
-        VALUES (%s, %s, 1)
-    """, (usuario, password_hash))
-
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/Login", methods=["POST", "OPTIONS"])
+@app.route("/Login", methods=["POST"])
 def login():
-    if request.method == "OPTIONS":
-        return "", 200
 
     data = request.json
     usuario = data.get("usuario")
@@ -188,30 +163,24 @@ def login():
     })
 
 
-@app.route("/CheckSession", methods=["GET", "OPTIONS"])
+@app.route("/CheckSession", methods=["GET"])
 def check_session():
-    if request.method == "OPTIONS":
-        return "", 200
-        
+    
     if "idUsuario" not in session:
         return jsonify({"ok": False}), 401
 
     return jsonify({"ok": True, "usuario": session.get("usuario")}), 200
 
 
-@app.route("/Logout", methods=["POST", "OPTIONS"])
+@app.route("/Logout", methods=["POST"])
 def logout():
-    if request.method == "OPTIONS":
-        return "", 200
-        
+    
     session.clear()
     return jsonify({"ok": True})
 
 
-@app.route("/RecuperarPassword", methods=["POST", "OPTIONS"])
+@app.route("/RecuperarPassword", methods=["POST"])
 def recuperar_password():
-    if request.method == "OPTIONS":
-        return "", 200
 
     conn = cursor = None
 
@@ -268,10 +237,8 @@ def recuperar_password():
             conn.close()
 
 
-@app.route("/ResetPassword", methods=["POST", "OPTIONS"])
+@app.route("/ResetPassword", methods=["POST"])
 def reset_password():
-    if request.method == "OPTIONS":
-        return "", 200
 
     conn = cursor = None
 
@@ -327,10 +294,8 @@ def reset_password():
 # RUTAS - PRODUCTOS
 # ============================================
 
-@app.route("/GetProductos", methods=["GET", "OPTIONS"])
+@app.route("/GetProductos", methods=["GET"])
 def get_productos():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -364,10 +329,8 @@ def get_productos():
     return jsonify(data)
 
 
-@app.route("/AddProducto", methods=["POST", "OPTIONS"])
+@app.route("/AddProducto", methods=["POST"])
 def add_producto():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = None
     cursor = None
@@ -505,10 +468,8 @@ def add_producto():
             conn.close()
 
 
-@app.route("/DeleteProductos", methods=["POST", "OPTIONS"])
+@app.route("/DeleteProductos", methods=["POST"])
 def delete_productos():
-    if request.method == "OPTIONS":
-        return "", 200
 
     try:
         data = request.get_json(force=True)
@@ -545,10 +506,8 @@ def delete_productos():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/ActualizarStock", methods=["POST", "OPTIONS"])
+@app.route("/ActualizarStock", methods=["POST"])
 def actualizar_stock():
-    if request.method == "OPTIONS":
-        return "", 200
         
     data = request.get_json()
 
@@ -614,10 +573,8 @@ def actualizar_stock():
 # RUTAS - CATÁLOGOS
 # ============================================
 
-@app.route("/GetCategorias", methods=["GET", "OPTIONS"])
+@app.route("/GetCategorias", methods=["GET"])
 def get_categorias():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -636,10 +593,8 @@ def get_categorias():
     return jsonify(data)
 
 
-@app.route("/AddCategoria", methods=["POST", "OPTIONS"])
+@app.route("/AddCategoria", methods=["POST"])
 def add_categoria():
-    if request.method == "OPTIONS":
-        return "", 200
         
     data = request.get_json()
     nombre = data.get("nombre", "").strip()
@@ -665,10 +620,8 @@ def add_categoria():
         conn.close()
 
 
-@app.route("/GetGeneros", methods=["GET", "OPTIONS"])
+@app.route("/GetGeneros", methods=["GET"])
 def get_generos():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -686,10 +639,8 @@ def get_generos():
     return jsonify(data)
 
 
-@app.route("/GetColores", methods=["GET", "OPTIONS"])
+@app.route("/GetColores", methods=["GET"])
 def get_colores():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -703,10 +654,8 @@ def get_colores():
     return jsonify(data)
 
 
-@app.route("/AddColor", methods=["POST", "OPTIONS"])
+@app.route("/AddColor", methods=["POST",])
 def add_color():
-    if request.method == "OPTIONS":
-        return "", 200
 
     data = request.get_json()
     nombre = data["nombre"]
@@ -726,10 +675,8 @@ def add_color():
     return jsonify({"ok": True})
 
 
-@app.route("/GetTallas", methods=["GET", "OPTIONS"])
+@app.route("/GetTallas", methods=["GET"])
 def get_tallas():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -743,10 +690,8 @@ def get_tallas():
     return jsonify(data)
 
 
-@app.route("/GetTallasPorCategoriaGenero", methods=["GET", "OPTIONS"])
+@app.route("/GetTallasPorCategoriaGenero", methods=["GET"])
 def get_tallas_por_categoria_genero():
-    if request.method == "OPTIONS":
-        return "", 200
         
     id_categoria = request.args.get("id_categoria")
     id_genero = request.args.get("id_genero")
@@ -773,10 +718,8 @@ def get_tallas_por_categoria_genero():
     return jsonify(data)
 
 
-@app.route("/GetEstilosUnicos", methods=["GET", "OPTIONS"])
+@app.route("/GetEstilosUnicos", methods=["GET"])
 def get_estilos_unicos():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -796,10 +739,8 @@ def get_estilos_unicos():
     return jsonify(data)
 
 
-@app.route("/GetTallasValidas", methods=["GET", "OPTIONS"])
+@app.route("/GetTallasValidas", methods=["GET"])
 def get_tallas_validas():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -819,10 +760,8 @@ def get_tallas_validas():
     return jsonify(data)
 
 
-@app.route("/GetNombresProductos", methods=["GET", "OPTIONS"])
+@app.route("/GetNombresProductos", methods=["GET"])
 def get_nombres_productos():
-    if request.method == "OPTIONS":
-        return "", 200
         
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
@@ -843,11 +782,9 @@ def get_nombres_productos():
     return jsonify(data)
 
 
-@app.route("/InformationGeneral", methods=["GET", "OPTIONS"])
+@app.route("/InformationGeneral", methods=["GET"])
 def reporte_general():
-    if request.method == "OPTIONS":
-        return "", 200
-        
+    
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
@@ -897,6 +834,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
