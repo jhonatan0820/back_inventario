@@ -3,7 +3,7 @@ import os
 from urllib.parse import urlparse
 
 def get_connection():
-    database_url = os.environ.get("back-inventario")
+    database_url = os.environ.get("MYSQL_URL")
 
     if not database_url:
         raise Exception("DATABASE_URL no está definida")
@@ -17,6 +17,7 @@ def get_connection():
         password=parsed.password,
         database=parsed.path.lstrip("/")
     )
+
 
 
 
