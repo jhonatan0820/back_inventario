@@ -1,14 +1,13 @@
+import mysql.connector
+import uuid
+import os
+from urllib.parse import urlparse
 from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 from itsdangerous import URLSafeTimedSerializer
-import mysql.connector
-import uuid
 from datetime import datetime, timedelta
-import os
-from urllib.parse import urlparse
-
 
 app = Flask(__name__)
 
@@ -917,3 +916,4 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
