@@ -20,16 +20,16 @@ app = Flask(__name__)
 CORS(
     app,
     supports_credentials=True,
-    origins=[
-        "https://api.dotacioneszambrano.com",
-        "https://dotacioneszambrano.com",
-        "https://frontinventario-production.up.railway.app",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ],
-    allow_headers=["Content-Type", "Authorization"],
-    expose_headers=["Content-Type"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    resources={
+        r"/*": {
+            "origins": [
+                "https://dotacioneszambrano.com",
+                "https://frontinventario-production.up.railway.app",
+                "http://127.0.0.1:5500",
+                "http://localhost:5500"
+            ]
+        }
+    }
 )
 
 # ============================================
@@ -42,10 +42,12 @@ app.config.update(
     SESSION_COOKIE_SAMESITE="None",
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_PATH="/",
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
 # ============================================
 # CONFIGURACIÓN DE MAIL
 # ============================================
@@ -83,32 +85,6 @@ def get_connection():
         password=parsed.password,
         database=parsed.path.lstrip("/")
     )
-
-
-# ============================================
-# MIDDLEWARE PARA CORS EN CADA RESPUESTA
-# ============================================
-@app.after_request
-def after_request(response):
-    origin = request.headers.get('Origin')
-    
-    allowed_origins = [
-        "https://api.dotacioneszambrano.com",
-        "https://dotacioneszambrano.com",
-        "https://frontinventario-production.up.railway.app",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ]
-    
-    if origin in allowed_origins:
-        response.headers['Access-Control-Allow-Origin'] = origin
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-        response.headers['Access-Control-Max-Age'] = '3600'
-    
-    return response
-
 
 # ============================================
 # UTILIDADES
@@ -921,6 +897,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
