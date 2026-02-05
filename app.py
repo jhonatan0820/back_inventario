@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 app = Flask(__name__)
 
 # ============================================
@@ -45,6 +45,7 @@ app.config.update(
     SESSION_REFRESH_EACH_REQUEST=True
 )
 
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 # ============================================
 # CONFIGURACIÓN DE MAIL
 # ============================================
@@ -920,6 +921,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
