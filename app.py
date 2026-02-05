@@ -18,6 +18,7 @@ CORS(
     app,
     supports_credentials=True,
     origins=[
+        "https://api.dotacioneszambrano.com",
         "https://dotacioneszambrano.com",
         "https://frontinventario-production.up.railway.app",
         "http://127.0.0.1:5500",
@@ -916,4 +917,5 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
