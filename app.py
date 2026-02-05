@@ -66,7 +66,7 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 def get_connection():
     """Conexión a base de datos con variable corregida"""
-    database_url = os.environ.get("back-inventario")
+    database_url = os.environ.get("MYSQL_URL")
 
     if not database_url:
         raise Exception("back-inventario no está definida en las variables de entorno")
@@ -917,5 +917,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
