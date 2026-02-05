@@ -8,7 +8,10 @@ from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
+from werkzeug.middleware.proxy_fix import ProxyFix
 
+
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 app = Flask(__name__)
 
 # ============================================
@@ -917,6 +920,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
