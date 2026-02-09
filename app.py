@@ -237,6 +237,11 @@ def recuperar_password():
             conn.close()
 
 
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"ok": True, "status": "running"}), 200
+
+
 @app.route("/ResetPassword", methods=["POST"])
 def reset_password():
 
@@ -834,6 +839,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
