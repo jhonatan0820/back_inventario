@@ -237,8 +237,8 @@ def recuperar_password():
             conn.close()
 
 
-@app.route("/healths", methods=["GET"])
-def healths():
+@app.route("/activador", methods=["GET"])
+def activador():
     return jsonify({"ok": True, "status": "running"}), 200
 
 
@@ -839,6 +839,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
