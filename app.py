@@ -513,13 +513,13 @@ def delete_productos():
 
 @app.route("/ActualizarStock", methods=["POST"])
 def actualizar_stock():
-        
     data = request.get_json()
 
-    id_variante = data.get("id_variante")
-    nuevo_stock = data.get("nuevo_stock")
+    id_variante  = data.get("id_variante")
+    cantidad     = data.get("cantidad")
+    precio_venta = data.get("precio_venta")
 
-    if id_variante is None or nuevo_stock is None:
+    if None in (id_variante, cantidad, precio_venta):
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
     conn = get_connection()
@@ -537,28 +537,29 @@ def actualizar_stock():
 
         stock_anterior = row["stock"]
 
-        if stock_anterior == nuevo_stock:
-            return jsonify({"ok": True})
+        if cantidad <= 0 or cantidad > stock_anterior:
+            return jsonify({"ok": False, "error": "Cantidad inválida"}), 400
 
-        diferencia = nuevo_stock - stock_anterior
-
-        tipo = "ENTRADA" if diferencia > 0 else "SALIDA"
-        cantidad = abs(diferencia)
+        stock_nuevo = stock_anterior - cantidad
+        total_venta = cantidad * precio_venta
 
         cursor.execute(
             "UPDATE variantes SET stock = %s WHERE id_variante = %s",
-            (nuevo_stock, id_variante)
+            (stock_nuevo, id_variante)
         )
+
         cursor.execute("""
             INSERT INTO movimientos_inventario
-            (id_variante, tipo, cantidad, stock_anterior, stock_nuevo)
-            VALUES (%s, %s, %s, %s, %s)
+            (id_variante, tipo, cantidad, stock_anterior, stock_nuevo,
+             fecha, precio_venta, fecha_venta, total_venta)
+            VALUES (%s, 'SALIDA', %s, %s, %s, NOW(), %s, NOW(), %s)
         """, (
             id_variante,
-            tipo,
             cantidad,
             stock_anterior,
-            nuevo_stock
+            stock_nuevo,
+            precio_venta,
+            total_venta
         ))
 
         conn.commit()
@@ -572,6 +573,7 @@ def actualizar_stock():
     finally:
         cursor.close()
         conn.close()
+
 
 
 # ============================================
@@ -839,6 +841,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
