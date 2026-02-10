@@ -574,6 +574,53 @@ def actualizar_stock():
         cursor.close()
         conn.close()
 
+@app.route("/EntradaStock", methods=["POST"])
+def entrada_stock():
+    data = request.get_json()
+
+    id_variante = data.get("id_variante")
+    cantidad    = data.get("cantidad")
+
+    if None in (id_variante, cantidad):
+        return jsonify({"ok": False, "error": "Datos incompletos"}), 400
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute(
+            "SELECT stock FROM variantes WHERE id_variante = %s",
+            (id_variante,)
+        )
+        row = cursor.fetchone()
+
+        stock_anterior = row["stock"]
+        stock_nuevo = stock_anterior + cantidad
+
+        cursor.execute(
+            "UPDATE variantes SET stock = %s WHERE id_variante = %s",
+            (stock_nuevo, id_variante)
+        )
+
+        cursor.execute("""
+            INSERT INTO movimientos_inventario
+            (id_variante, tipo, cantidad, stock_anterior, stock_nuevo, fecha)
+            VALUES (%s, 'ENTRADA', %s, %s, %s, NOW())
+        """, (
+            id_variante,
+            cantidad,
+            stock_anterior,
+            stock_nuevo
+        ))
+
+        conn.commit()
+        return jsonify({"ok": True})
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+
 
 
 # ============================================
@@ -841,6 +888,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
