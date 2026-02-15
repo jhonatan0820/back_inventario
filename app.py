@@ -801,13 +801,23 @@ def get_tallas_validas():
     conn = get_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("""
+    id_categoria = request.args.get("id_categoria", type=int)
+
+    query = """
         SELECT DISTINCT t.valor AS talla
         FROM variantes v
         INNER JOIN tallas t ON v.id_talla = t.id_talla
         WHERE v.id_estado = 1 and t.id_estado = 1
-        ORDER BY t.valor
-    """)
+    """
+
+    params = []
+    if id_categoria:
+        query += " AND t.id_categoria = %s"
+        params.append(id_categoria)
+
+    query += " ORDER BY t.valor"
+
+    cursor.execute(query, params)
 
     data = cursor.fetchall()
     cursor.close()
@@ -890,12 +900,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
-
 
 
 
