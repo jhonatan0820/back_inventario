@@ -412,8 +412,8 @@ def add_producto():
                 id_estilo = row["id_estilo"]
             else:
                 cursor.execute(
-                    "INSERT INTO estilos (nombre, id_marca) VALUES (%s, %s)",
-                    (estilo, id_marca)
+                    "INSERT INTO estilos (nombre, id_marca, id_estado) VALUES (%s, %s, %s)",
+                    (estilo, id_marca, 1)
                 )
                 id_estilo = cursor.lastrowid
 
@@ -1016,6 +1016,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
