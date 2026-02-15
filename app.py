@@ -414,16 +414,39 @@ def add_producto():
                 )
                 id_estilo = cursor.lastrowid
 
-        # PRODUCTO
+        # PRODUCTO (reutilizar si ya existe)
         cursor.execute(
             """
-            INSERT INTO productos
-            (nombre, id_marca, id_estilo, id_categoria, id_genero, id_estado)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            SELECT id_producto, id_estado
+            FROM productos
+            WHERE nombre = %s
+              AND id_categoria = %s
+              AND id_genero = %s
+              AND (id_marca <=> %s)
+              AND (id_estilo <=> %s)
+            LIMIT 1
             """,
-            (nombre, id_marca, id_estilo, id_categoria, id_genero, 1)
+            (nombre, id_categoria, id_genero, id_marca, id_estilo)
         )
-        id_producto = cursor.lastrowid
+        existing_product = cursor.fetchone()
+
+        if existing_product:
+            id_producto = existing_product["id_producto"]
+            if existing_product["id_estado"] != 1:
+                cursor.execute(
+                    "UPDATE productos SET id_estado = 1 WHERE id_producto = %s",
+                    (id_producto,)
+                )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO productos
+                (nombre, id_marca, id_estilo, id_categoria, id_genero, id_estado)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (nombre, id_marca, id_estilo, id_categoria, id_genero, 1)
+            )
+            id_producto = cursor.lastrowid
 
         # VARIANTES
         for v in variantes:
@@ -453,12 +476,35 @@ def add_producto():
                 )
                 id_talla = cursor.lastrowid
 
-            cursor.execute("""
-                INSERT INTO variantes
-                (id_producto, id_color, id_talla, precio, stock, id_estado)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, (id_producto, id_color, id_talla, precio, stock,1)
+            cursor.execute(
+                """
+                SELECT id_variante, id_estado
+                FROM variantes
+                WHERE id_producto = %s
+                  AND id_color = %s
+                  AND id_talla = %s
+                LIMIT 1
+                """,
+                (id_producto, id_color, id_talla)
+            )
+            existing_variante = cursor.fetchone()
+
+            if existing_variante:
+                cursor.execute(
+                    """
+                    UPDATE variantes
+                    SET id_estado = 1, precio = %s, stock = %s
+                    WHERE id_variante = %s
+                    """,
+                    (precio, stock, existing_variante["id_variante"])
                 )
+            else:
+                cursor.execute("""
+                    INSERT INTO variantes
+                    (id_producto, id_color, id_talla, precio, stock, id_estado)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """, (id_producto, id_color, id_talla, precio, stock,1)
+                    )
         conn.commit()
         return jsonify({"ok": True})
 
@@ -486,9 +532,20 @@ def delete_productos():
             return jsonify({"error": "IDs inválidos"}), 400
 
         conn = get_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
         placeholders = ",".join(["%s"] * len(ids))
+        cursor.execute(
+            f"""
+            SELECT DISTINCT p.id_producto
+            FROM variantes v
+            JOIN productos p ON v.id_producto = p.id_producto
+            WHERE v.id_variante IN ({placeholders})
+            """,
+            ids
+        )
+        producto_ids = [row["id_producto"] for row in cursor.fetchall()]
+
         sql = f"""
             UPDATE variantes
             SET id_estado = 2
@@ -499,6 +556,36 @@ def delete_productos():
         conn.commit()
 
         eliminados = cursor.rowcount
+
+        # Desactivar productos que ya no tengan variantes activas
+        if producto_ids:
+            placeholders_prod = ",".join(["%s"] * len(producto_ids))
+            cursor.execute(
+                f"""
+                SELECT p.id_producto
+                FROM productos p
+                LEFT JOIN variantes v
+                  ON v.id_producto = p.id_producto
+                 AND v.id_estado = 1
+                WHERE p.id_producto IN ({placeholders_prod})
+                GROUP BY p.id_producto
+                HAVING COUNT(v.id_variante) = 0
+                """,
+                producto_ids
+            )
+            productos_sin_variantes = [row["id_producto"] for row in cursor.fetchall()]
+
+            if productos_sin_variantes:
+                placeholders_disable = ",".join(["%s"] * len(productos_sin_variantes))
+                cursor.execute(
+                    f"""
+                    UPDATE productos
+                    SET id_estado = 2
+                    WHERE id_producto IN ({placeholders_disable})
+                    """,
+                    productos_sin_variantes
+                )
+                conn.commit()
 
         cursor.close()
         conn.close()
@@ -926,5 +1013,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
