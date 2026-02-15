@@ -81,13 +81,23 @@ def get_connection():
 
     parsed = urlparse(database_url)
 
+    def get_connection():
+    database_url = os.environ.get("MYSQL_URL")
+
+    if not database_url:
+        raise Exception("MYSQL_URL no definida")
+
+    parsed = urlparse(database_url)
+
     return mysql.connector.connect(
         host=parsed.hostname,
         port=parsed.port or 3306,
         user=parsed.username,
         password=parsed.password,
-        database=parsed.path.lstrip("/")
+        database=parsed.path.lstrip("/"),
+        ssl_disabled=False
     )
+
 
 # ============================================
 # UTILIDADES
@@ -1013,6 +1023,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
