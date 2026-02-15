@@ -19,19 +19,13 @@ app = Flask(__name__)
 # ============================================
 CORS(
     app,
-    supports_credentials=True,
-    resources={
-        r"/*": {
-            "origins": [
-                "https://dotacioneszambrano.com",
-                "https://frontinventario-production.up.railway.app",
-                "http://127.0.0.1:5500",
-                "http://localhost:5500"
-            ],
-            "allow_headers": ["Content-Type", "Authorization"],
-            "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-        }
-    }
+    origins=[
+        "https://dotacioneszambrano.com",
+        "https://www.dotacioneszambrano.com",
+        "http://127.0.0.1:5500",
+        "http://localhost:5500"
+    ],
+    supports_credentials=True
 )
 
 
@@ -1022,6 +1016,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
