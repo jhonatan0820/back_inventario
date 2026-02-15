@@ -298,40 +298,26 @@ def reset_password():
 # ============================================
 # RUTAS - PRODUCTOS
 # ============================================
-
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
-        
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        print("Entró a GetProductos")
+        conn = get_connection()
+        print("Conectó a MySQL")
+        cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT
-            p.id_producto AS id_producto,
-            p.nombre AS nomproducto,
-            cat.nombre AS categoria,
-            v.id_variante AS id_variante,
-            m.nombre AS marca,
-            e.nombre AS estilo,
-            c.nombre AS color,
-            t.valor AS talla,
-            v.precio AS precio,
-            v.stock AS stock
-        FROM variantes v
-        JOIN productos p ON v.id_producto = p.id_producto
-        LEFT JOIN marcas m ON p.id_marca = m.id_marca
-        JOIN categorias cat ON p.id_categoria = cat.id_categoria
-        LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
-        LEFT JOIN colores c ON v.id_color = c.id_color
-        LEFT JOIN tallas t ON v.id_talla = t.id_talla
-        WHERE p.id_estado = 1 and v.id_estado = 1
-    """)
+        cursor.execute("SELECT 1")
+        test = cursor.fetchall()
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
+        cursor.close()
+        conn.close()
 
-    return jsonify(data)
+        return jsonify({"ok": True, "test": test})
+
+    except Exception as e:
+        print("ERROR EN GetProductos:", e)
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/AddProducto", methods=["POST"])
@@ -888,6 +874,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
