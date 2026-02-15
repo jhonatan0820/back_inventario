@@ -445,18 +445,18 @@ def add_producto():
                 cursor.execute(
                     """
                     INSERT INTO tallas (valor, id_categoria, id_genero, id_estado)
-                    VALUES (%s, %s, %s, 1)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (talla, id_categoria, id_genero)
+                    (talla, id_categoria, id_genero,1)
                 )
                 id_talla = cursor.lastrowid
 
             cursor.execute("""
                 INSERT INTO variantes
                 (id_producto, id_color, id_talla, precio, stock, id_estado)
-                VALUES (%s, %s, %s, %s, %s, 1)
-            """, (id_producto, id_color, id_talla, precio, stock))
-
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (id_producto, id_color, id_talla, precio, stock,1)
+                )
         conn.commit()
         return jsonify({"ok": True})
 
@@ -888,6 +888,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
