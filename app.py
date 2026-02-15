@@ -774,6 +774,32 @@ def get_tallas_por_categoria_genero():
     return jsonify(data)
 
 
+@app.route("/GetTallasPorCategoria", methods=["GET"])
+def get_tallas_por_categoria():
+        
+    id_categoria = request.args.get("id_categoria")
+
+    if not id_categoria:
+        return jsonify([])
+
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT valor AS talla
+        FROM tallas
+        WHERE id_categoria = %s
+          AND id_estado = 1
+        ORDER BY valor
+    """, (id_categoria,))
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
+
 @app.route("/GetEstilosUnicos", methods=["GET"])
 def get_estilos_unicos():
         
