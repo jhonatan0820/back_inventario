@@ -239,10 +239,18 @@ def recuperar_password():
         if conn:
             conn.close()
 
-
-@app.route("/activador", methods=["GET"])
+@app.route("/activador")
 def activador():
-    return jsonify({"ok": True, "status": "running"}), 200
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        conn.close()
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 500
+
 
 
 @app.route("/ResetPassword", methods=["POST"])
@@ -1016,6 +1024,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
