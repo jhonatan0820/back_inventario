@@ -1,10 +1,8 @@
-python-dotenv
-Flask
+flask
 flask-cors
 flask-mail
 flask-bcrypt
 mysql-connector-python
-requests
 gunicorn
+requests
 itsdangerous
-bcrypt
