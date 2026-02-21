@@ -198,7 +198,7 @@ def login():
             }), 401
 
         intentos_login[usuario].clear()
-        session['id_usuario'] = user['id_usuario']
+        session['idUsuario'] = user['idUsuario']
         session['usuario'] = usuario
         print("=== LOGIN EXITOSO ===")
         return jsonify({'ok': True}), 200
@@ -1068,6 +1068,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
