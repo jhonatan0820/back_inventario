@@ -2,6 +2,7 @@ import time
 import mysql.connector
 import uuid
 import os
+import requests
 from urllib.parse import urlparse
 from flask import Flask, jsonify, request, session
 from flask_cors import CORS
@@ -67,13 +68,11 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 # ============================================
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
-
 def get_connection():
     try:
         database_url = os.environ.get("MYSQL_URL")
         if not database_url:
-            print("MYSQL_URL no definida")
-            return None
+            raise Exception("MYSQL_URL no definida")
 
         parsed = urlparse(database_url)
 
@@ -91,14 +90,14 @@ def get_connection():
 
     except Exception as e:
         print("ERROR CONECTANDO A MYSQL:", e)
-        return None
+        raise e
+
 
 
 
 # ============================================
 # UTILIDADES
 # ============================================
-import requests
 
 def enviar_correo(email, token):
     url = "https://api.resend.com/emails"
@@ -1068,6 +1067,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
