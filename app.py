@@ -136,9 +136,7 @@ VENTANA_SEGUNDOS = 300
 MAX_INTENTOS = 3
 
 def verificar_password(password_plano, password_bd):
-    # Si viene como string lo convertimos a bytes, si ya es bytes lo dejamos
-    hash_bytes = password_bd if isinstance(password_bd, bytes) else password_bd.encode('utf-8')
-    return bcrypt.checkpw(password_plano.encode('utf-8'), hash_bytes)
+    return bcrypt.check_password_hash(password_bd, password_plano)
 
 
 @app.route('/Login', methods=['POST'])
@@ -1070,5 +1068,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
