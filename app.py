@@ -68,6 +68,7 @@ serializer = URLSafeTimedSerializer(app.secret_key)
 # ============================================
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
+
 def get_connection():
     try:
         database_url = os.environ.get("MYSQL_URL")
@@ -82,7 +83,8 @@ def get_connection():
             user=parsed.username,
             password=parsed.password,
             database=parsed.path.lstrip("/"),
-            ssl_disabled=False,
+            ssl_ca="./ca.pem",
+            ssl_verify_cert=True,
             connection_timeout=5
         )
 
@@ -90,8 +92,7 @@ def get_connection():
 
     except Exception as e:
         print("ERROR CONECTANDO A MYSQL:", e)
-        raise e
-
+        raise
 
 
 
@@ -1067,6 +1068,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
