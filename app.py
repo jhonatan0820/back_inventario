@@ -1,3 +1,4 @@
+import time
 import mysql.connector
 import uuid
 import os
@@ -9,6 +10,7 @@ from flask_bcrypt import Bcrypt
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
+from collections import defaultdict
 
 
 
@@ -129,42 +131,81 @@ def enviar_correo(email, token):
 # ============================================
 # RUTAS - AUTENTICACIÓN
 # ============================================
+intentos_login = defaultdict(list)
+VENTANA_SEGUNDOS = 300  
+MAX_INTENTOS = 3
 
-@app.route("/Login", methods=["POST"])
+def verificar_password(password_plano, password_bd):
+    return bcrypt.checkpw(
+        password_plano.encode('utf-8'),
+        password_bd.encode('utf-8')
+    )
+
+
+@app.route('/Login', methods=['POST'])
 def login():
+    data = request.get_json()
 
-    data = request.json
-    usuario = data.get("usuario")
-    password = data.get("password")
+    usuario = data.get('usuario', '').strip()
+    password = data.get('password', '').strip()
 
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    # Validar que vengan los datos
+    if not usuario or not password:
+        return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
 
-    cursor.execute("""
-        SELECT idUsuario, usuario, password
-        FROM usuarios
-        WHERE usuario = %s AND id_estado = 1
-    """, (usuario,))
+    ahora = time.time()
 
-    user = cursor.fetchone()
-    cursor.close()
-    conn.close()
+    # Limpiar intentos fuera de la ventana de tiempo
+    intentos_login[usuario] = [
+        t for t in intentos_login[usuario]
+        if ahora - t < VENTANA_SEGUNDOS
+    ]
 
-    if not user:
-        return jsonify({"ok": False, "error": "El usuario no está registrado"}), 401
+    # Verificar si ya superó el límite
+    if len(intentos_login[usuario]) >= MAX_INTENTOS:
+        minutos_restantes = int((VENTANA_SEGUNDOS - (ahora - intentos_login[usuario][0])) / 60) + 1
+        return jsonify({
+            'ok': False,
+            'error': 'MAX_INTENTOS',
+            'mensaje': f'Demasiados intentos. Intenta en {minutos_restantes} minutos.'
+        }), 429
 
-    if not bcrypt.check_password_hash(user["password"], password):
-        return jsonify({"ok": False, "error": "Contraseña incorrecta"}), 401
+    # Verificar credenciales contra la base de datos
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
 
-    # Guardar sesión
-    session.permanent = True
-    session["idUsuario"] = user["idUsuario"]
-    session["usuario"] = user["usuario"]
-    
-    return jsonify({
-        "ok": True,
-        "usuario": user["usuario"]
-    })
+        cursor.execute(
+            "SELECT id_usuario, password FROM usuarios WHERE usuario = %s",
+            (usuario,)
+        )
+        user = cursor.fetchone()
+
+    except Exception as e:
+        return jsonify({'ok': False, 'error': 'Error interno del servidor'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Usuario no existe o contraseña incorrecta
+    # (mismo mensaje para no revelar cuál de los dos falló)
+    if not user or not verificar_password(password, user['password']):
+        intentos_login[usuario].append(ahora)
+        intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
+
+        return jsonify({
+            'ok': False,
+            'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
+        }), 401
+
+    # Login exitoso — limpiar intentos y crear sesión
+    intentos_login[usuario].clear()
+    session['id_usuario'] = user['id_usuario']
+    session['usuario'] = usuario
+
+    return jsonify({'ok': True}), 200
+
 
 
 @app.route("/CheckSession", methods=["GET"])
@@ -1025,14 +1066,3 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
-
-
-
-
-
-
