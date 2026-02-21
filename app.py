@@ -105,7 +105,7 @@ def enviar_correo(email, token):
 
     payload = {
         "from": "Inventario <onboarding@resend.dev>",
-        "to": [email],  # ← CORREGIDO: debe ir el email del usuario
+        "to": [email],
         "subject": "Recuperar contraseña Inventario Dotaciones Zambrano",
         "html": f"""
         <h2>Recuperación de contraseña</h2>
@@ -1068,6 +1068,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
