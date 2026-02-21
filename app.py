@@ -174,7 +174,7 @@ def login():
             print(f"=== CONEXION: {conn} ===")
             cursor = conn.cursor(dictionary=True)
             cursor.execute(
-                "SELECT id_usuario, password FROM usuarios WHERE usuario = %s",
+                "SELECT idUsuario, password FROM usuarios WHERE usuario = %s",
                 (usuario,)
             )
             user = cursor.fetchone()
@@ -1068,6 +1068,7 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
 
