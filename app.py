@@ -94,6 +94,30 @@ def get_connection():
         print("ERROR CONECTANDO A MYSQL:", e)
         return None
 
+@app.route("/ping", methods=["GET", "HEAD"])
+def ping():
+    return "OK", 200
+
+@app.route("/activador")
+def activador():
+    conn = None
+    cursor = None
+    try:
+        conn = get_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except Exception as e:
+        print("DB dormida o error:", e)
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return jsonify({"ok": True})
+
 
 
 # ============================================
@@ -281,31 +305,6 @@ def recuperar_password():
             cursor.close()
         if conn:
             conn.close()
-
-@app.route("/ping", methods=["GET", "HEAD"])
-def ping():
-    return "OK", 200
-
-@app.route("/activador")
-def activador():
-    conn = None
-    cursor = None
-    try:
-        conn = get_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-    except Exception as e:
-        print("DB dormida o error:", e)
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
-    return jsonify({"ok": True})
-
 
 
 @app.route("/ResetPassword", methods=["POST"])
@@ -1079,5 +1078,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
