@@ -159,10 +159,7 @@ VENTANA_SEGUNDOS = 300
 MAX_INTENTOS = 3
 
 def verificar_password(password_plano, password_bd):
-    return bcrypt.checkpw(
-        password_plano.encode('utf-8'),
-        password_bd.encode('utf-8')
-    )
+    return bcrypt.check_password_hash(password_bd, password_plano)
 
 
 @app.route('/Login', methods=['POST'])
@@ -1076,4 +1073,5 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
