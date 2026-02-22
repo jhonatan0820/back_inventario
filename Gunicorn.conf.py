@@ -1,7 +1,6 @@
 import multiprocessing
 import os
 
-# Bind to all interfaces on the port Render provides
 bind = f"0.0.0.0:{os.environ.get('PORT', 8080)}"
 
 # Worker configuration
