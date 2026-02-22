@@ -12,8 +12,6 @@ from datetime import datetime, timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
 from collections import defaultdict
 import requests
-import signal
-import sys
 
 
 
@@ -50,7 +48,6 @@ app.config.update(
 
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1, x_for=1)
-
 # ============================================
 # CONFIGURACIÓN DE MAIL
 # ============================================
@@ -76,7 +73,7 @@ def get_connection():
     try:
         database_url = os.environ.get("MYSQL_URL")
         if not database_url:
-            print("⚠️ MYSQL_URL no definida")
+            print("MYSQL_URL no definida")
             return None
 
         parsed = urlparse(database_url)
@@ -88,64 +85,21 @@ def get_connection():
             password=parsed.password,
             database=parsed.path.lstrip("/"),
             ssl_disabled=False,
-            connection_timeout=10,
-            autocommit=False
+            connection_timeout=5
         )
 
         return conn
 
     except Exception as e:
-        print(f"❌ ERROR CONECTANDO A MYSQL: {e}")
+        print("ERROR CONECTANDO A MYSQL:", e)
         return None
-
-# ============================================
-# HEALTH CHECKS MEJORADOS
-# ============================================
-@app.route("/", methods=["GET"])
-def health():
-    """Health check principal"""
-    return jsonify({
-        "status": "ok", 
-        "message": "API funcionando correctamente",
-        "timestamp": datetime.utcnow().isoformat()
-    }), 200
 
 @app.route("/ping", methods=["GET", "HEAD"])
 def ping():
-    """Health check simple para Render"""
     return "OK", 200
-
-@app.route("/health", methods=["GET"])
-def health_detailed():
-    """Health check detallado con verificación de DB"""
-    conn = None
-    cursor = None
-    db_status = "down"
-    
-    try:
-        conn = get_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-            db_status = "up"
-    except Exception as e:
-        print(f"⚠️ DB health check failed: {e}")
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-    
-    return jsonify({
-        "status": "ok",
-        "database": db_status,
-        "timestamp": datetime.utcnow().isoformat()
-    }), 200
 
 @app.route("/activador")
 def activador():
-    """Endpoint para despertar la base de datos"""
     conn = None
     cursor = None
     try:
@@ -154,28 +108,29 @@ def activador():
             cursor = conn.cursor()
             cursor.execute("SELECT 1")
             cursor.fetchone()
-            return jsonify({"ok": True, "message": "Database awakened"}), 200
-        else:
-            return jsonify({"ok": False, "error": "Could not connect to database"}), 503
     except Exception as e:
-        print(f"⚠️ Activador error: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 503
+        print("DB dormida o error:", e)
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
+
+    return jsonify({"ok": True})
+
 
 
 # ============================================
 # UTILIDADES
 # ============================================
+
+
 def enviar_correo(email, token):
     url = "https://api.resend.com/emails"
 
     payload = {
         "from": "Inventario <onboarding@resend.dev>",
-        "to": [email],
+        "to": [email],  # ← CORREGIDO: debe ir el email del usuario
         "subject": "Recuperar contraseña Inventario Dotaciones Zambrano",
         "html": f"""
         <h2>Recuperación de contraseña</h2>
@@ -192,7 +147,7 @@ def enviar_correo(email, token):
         "Content-Type": "application/json"
     }
 
-    response = requests.post(url, json=payload, headers=headers, timeout=10)
+    response = requests.post(url, json=payload, headers=headers, timeout=5)
 
     if response.status_code not in (200, 201):
         raise Exception(f"Error enviando correo: {response.text}")
@@ -219,16 +174,19 @@ def login():
     usuario = data.get('usuario', '').strip()
     password = data.get('password', '').strip()
 
+    # Validar que vengan los datos
     if not usuario or not password:
         return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
 
     ahora = time.time()
 
+    # Limpiar intentos fuera de la ventana de tiempo
     intentos_login[usuario] = [
         t for t in intentos_login[usuario]
         if ahora - t < VENTANA_SEGUNDOS
     ]
 
+    # Verificar si ya superó el límite
     if len(intentos_login[usuario]) >= MAX_INTENTOS:
         minutos_restantes = int((VENTANA_SEGUNDOS - (ahora - intentos_login[usuario][0])) / 60) + 1
         return jsonify({
@@ -237,14 +195,9 @@ def login():
             'mensaje': f'Demasiados intentos. Intenta en {minutos_restantes} minutos.'
         }), 429
 
-    conn = None
-    cursor = None
-    
+    # Verificar credenciales contra la base de datos
     try:
         conn = get_connection()
-        if not conn:
-            return jsonify({'ok': False, 'error': 'Error de conexión a la base de datos'}), 503
-            
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
@@ -253,35 +206,37 @@ def login():
         )
         user = cursor.fetchone()
 
-        if not user or not verificar_password(password, user['password']):
-            intentos_login[usuario].append(ahora)
-            intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
-
-            return jsonify({
-                'ok': False,
-                'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
-            }), 401
-
-        intentos_login[usuario].clear()
-        session['id_usuario'] = user['id_usuario']
-        session['usuario'] = usuario
-
-        return jsonify({'ok': True}), 200
-
     except Exception as e:
-        print(f"❌ Error en login: {e}")
         return jsonify({'ok': False, 'error': 'Error interno del servidor'}), 500
 
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        cursor.close()
+        conn.close()
+
+    # Usuario no existe o contraseña incorrecta
+    # (mismo mensaje para no revelar cuál de los dos falló)
+    if not user or not verificar_password(password, user['password']):
+        intentos_login[usuario].append(ahora)
+        intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
+
+        return jsonify({
+            'ok': False,
+            'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
+        }), 401
+
+    # Login exitoso — limpiar intentos y crear sesión
+    intentos_login[usuario].clear()
+    session['id_usuario'] = user['id_usuario']
+    session['usuario'] = usuario
+
+    return jsonify({'ok': True}), 200
+
 
 
 @app.route("/CheckSession", methods=["GET"])
 def check_session():
-    if "id_usuario" not in session:
+    
+    if "idUsuario" not in session:
         return jsonify({"ok": False}), 401
 
     return jsonify({"ok": True, "usuario": session.get("usuario")}), 200
@@ -289,12 +244,14 @@ def check_session():
 
 @app.route("/Logout", methods=["POST"])
 def logout():
+    
     session.clear()
     return jsonify({"ok": True})
 
 
 @app.route("/RecuperarPassword", methods=["POST"])
 def recuperar_password():
+
     conn = cursor = None
 
     try:
@@ -305,17 +262,15 @@ def recuperar_password():
             return jsonify({"ok": False, "error": "Email requerido"}), 400
 
         conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
-            "SELECT id_usuario FROM usuarios WHERE email=%s AND id_estado=1",
+            "SELECT idUsuario FROM usuarios WHERE email=%s AND id_estado=1",
             (email,)
         )
         user = cursor.fetchone()
 
+        # No revelar si existe
         if not user:
             return jsonify({"ok": True})
 
@@ -323,27 +278,26 @@ def recuperar_password():
         expiracion = datetime.utcnow() + timedelta(minutes=5)
 
         cursor.execute("""
-            INSERT INTO password_resets (id_usuario, token, expira, id_estado)
+            INSERT INTO password_resets (idUsuario, token, expira, id_estado)
             VALUES (%s, %s, %s, 4)
             ON DUPLICATE KEY UPDATE
                 token = VALUES(token),
                 expira = VALUES(expira),
                 id_estado = 4
-        """, (user["id_usuario"], token, expiracion))
+        """, (user["idUsuario"], token, expiracion))
 
         conn.commit()
 
         try:
             enviar_correo(email, token)
         except Exception as mail_error:
-            print(f"⚠️ Error enviando correo: {mail_error}")
+            print("ERROR enviando correo:", mail_error)
 
         return jsonify({"ok": True})
 
     except Exception as e:
         if conn:
             conn.rollback()
-        print(f"❌ Error en recuperar password: {e}")
         return jsonify({"ok": False, "error": "Error interno"}), 500
 
     finally:
@@ -355,6 +309,7 @@ def recuperar_password():
 
 @app.route("/ResetPassword", methods=["POST"])
 def reset_password():
+
     conn = cursor = None
 
     try:
@@ -366,9 +321,6 @@ def reset_password():
             return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
         conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute("""
@@ -383,13 +335,13 @@ def reset_password():
         hashed = bcrypt.generate_password_hash(password).decode("utf-8")
 
         cursor.execute(
-            "UPDATE usuarios SET password=%s WHERE id_usuario=%s",
-            (hashed, reset["id_usuario"])
+            "UPDATE usuarios SET password=%s WHERE idUsuario=%s",
+            (hashed, reset["idUsuario"])
         )
 
         cursor.execute(
-            "UPDATE password_resets SET id_estado=3 WHERE id_password_resets=%s",
-            (reset["id_password_resets"],)
+            "UPDATE password_resets SET id_estado=3 WHERE idPasswordResets=%s",
+            (reset["idPasswordResets"],)
         )
 
         conn.commit()
@@ -399,7 +351,6 @@ def reset_password():
     except Exception as e:
         if conn: 
             conn.rollback()
-        print(f"❌ Error en reset password: {e}")
         return jsonify({"ok": False, "error": str(e)}), 500
 
     finally:
@@ -412,55 +363,47 @@ def reset_password():
 # ============================================
 # RUTAS - PRODUCTOS
 # ============================================
+
+
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT
-                p.id_producto AS id_producto,
-                p.nombre AS nomproducto,
-                cat.nombre AS categoria,
-                v.id_variante AS id_variante,
-                m.nombre AS marca,
-                e.nombre AS estilo,
-                c.nombre AS color,
-                t.valor AS talla,
-                v.precio AS precio,
-                v.stock AS stock
-            FROM variantes v
-            JOIN productos p ON v.id_producto = p.id_producto
-            LEFT JOIN marcas m ON p.id_marca = m.id_marca
-            JOIN categorias cat ON p.id_categoria = cat.id_categoria
-            LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
-            LEFT JOIN colores c ON v.id_color = c.id_color
-            LEFT JOIN tallas t ON v.id_talla = t.id_talla
-            WHERE p.id_estado = 1 and v.id_estado = 1
-        """)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetProductos: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            p.id_producto AS id_producto,
+            p.nombre AS nomproducto,
+            cat.nombre AS categoria,
+            v.id_variante AS id_variante,
+            m.nombre AS marca,
+            e.nombre AS estilo,
+            c.nombre AS color,
+            t.valor AS talla,
+            v.precio AS precio,
+            v.stock AS stock
+        FROM variantes v
+        JOIN productos p ON v.id_producto = p.id_producto
+        LEFT JOIN marcas m ON p.id_marca = m.id_marca
+        JOIN categorias cat ON p.id_categoria = cat.id_categoria
+        LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
+        LEFT JOIN colores c ON v.id_color = c.id_color
+        LEFT JOIN tallas t ON v.id_talla = t.id_talla
+        WHERE p.id_estado = 1 and v.id_estado = 1
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
+
 
 
 @app.route("/AddProducto", methods=["POST"])
 def add_producto():
+        
     conn = None
     cursor = None
     try:
@@ -474,6 +417,7 @@ def add_producto():
         id_color = int(data.get("id_color", 0))
         variantes = data.get("variantes")
 
+        # Validaciones
         if not id_genero:
             return jsonify({"ok": False, "error": "Género requerido"}), 400
         
@@ -497,9 +441,6 @@ def add_producto():
                 estilo = None
 
         conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
         cursor = conn.cursor(dictionary=True)
 
         # MARCA
@@ -538,7 +479,7 @@ def add_producto():
                 )
                 id_estilo = cursor.lastrowid
 
-        # PRODUCTO
+        # PRODUCTO (reutilizar si ya existe)
         cursor.execute(
             """
             SELECT id_producto, id_estado
@@ -596,7 +537,7 @@ def add_producto():
                     INSERT INTO tallas (valor, id_categoria, id_genero, id_estado)
                     VALUES (%s, %s, %s, %s)
                     """,
-                    (talla, id_categoria, id_genero, 1)
+                    (talla, id_categoria, id_genero,1)
                 )
                 id_talla = cursor.lastrowid
 
@@ -627,15 +568,15 @@ def add_producto():
                     INSERT INTO variantes
                     (id_producto, id_color, id_talla, precio, stock, id_estado)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                """, (id_producto, id_color, id_talla, precio, stock, 1))
-                
+                """, (id_producto, id_color, id_talla, precio, stock,1)
+                    )
         conn.commit()
         return jsonify({"ok": True})
 
     except Exception as e:
         if conn:
             conn.rollback()
-        print(f"❌ ERROR AGREGANDO PRODUCTO: {e}")
+        print("ERROR AGREGANDO PRODUCTO:", e)
         return jsonify({"ok": False, "error": str(e)}), 500
 
     finally:
@@ -647,9 +588,7 @@ def add_producto():
 
 @app.route("/DeleteProductos", methods=["POST"])
 def delete_productos():
-    conn = None
-    cursor = None
-    
+
     try:
         data = request.get_json(force=True)
         ids = data.get("ids", [])
@@ -658,9 +597,6 @@ def delete_productos():
             return jsonify({"error": "IDs inválidos"}), 400
 
         conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
         cursor = conn.cursor(dictionary=True)
 
         placeholders = ",".join(["%s"] * len(ids))
@@ -686,6 +622,7 @@ def delete_productos():
 
         eliminados = cursor.rowcount
 
+        # Desactivar productos que ya no tengan variantes activas
         if producto_ids:
             placeholders_prod = ",".join(["%s"] * len(producto_ids))
             cursor.execute(
@@ -715,20 +652,17 @@ def delete_productos():
                 )
                 conn.commit()
 
+        cursor.close()
+        conn.close()
+
         return jsonify({
             "ok": True,
             "eliminados": eliminados
         })
 
     except Exception as e:
-        print(f"❌ ERROR BORRANDO PRODUCTO: {e}")
+        print("ERROR BORRANDO PRODUCTO:", e)
         return jsonify({"error": str(e)}), 500
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
 
 
 @app.route("/ActualizarStock", methods=["POST"])
@@ -742,16 +676,10 @@ def actualizar_stock():
     if None in (id_variante, cantidad, precio_venta):
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
-    conn = None
-    cursor = None
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
     try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-        
         cursor.execute(
             "SELECT stock FROM variantes WHERE id_variante = %s AND id_estado = 1",
             (id_variante,)
@@ -792,17 +720,13 @@ def actualizar_stock():
         return jsonify({"ok": True})
 
     except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"❌ ERROR ACTUALIZAR STOCK: {e}")
+        conn.rollback()
+        print("ERROR ACTUALIZAR STOCK:", e)
         return jsonify({"ok": False, "error": str(e)}), 500
 
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
-
+        cursor.close()
+        conn.close()
 
 @app.route("/EntradaStock", methods=["POST"])
 def entrada_stock():
@@ -814,16 +738,10 @@ def entrada_stock():
     if None in (id_variante, cantidad):
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
-    conn = None
-    cursor = None
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
     try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-        
         cursor.execute(
             "SELECT stock FROM variantes WHERE id_variante = %s",
             (id_variante,)
@@ -853,408 +771,268 @@ def entrada_stock():
         return jsonify({"ok": True})
 
     except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"❌ Error en entrada stock: {e}")
+        conn.rollback()
         return jsonify({"ok": False, "error": str(e)}), 500
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+
+
 
 
 # ============================================
 # RUTAS - CATÁLOGOS
 # ============================================
+
 @app.route("/GetCategorias", methods=["GET"])
 def get_categorias():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT id_categoria, nombre
-            FROM categorias
-            WHERE id_estado = 1
-            ORDER BY nombre
-        """)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetCategorias: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id_categoria, nombre
+        FROM categorias
+        WHERE id_estado = 1
+        ORDER BY nombre
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/AddCategoria", methods=["POST"])
 def add_categoria():
+        
     data = request.get_json()
     nombre = data.get("nombre", "").strip()
 
     if not nombre:
         return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
-    conn = None
-    cursor = None
+    conn = get_connection()
+    cursor = conn.cursor()
 
     try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor()
-        
         cursor.execute(
             "INSERT INTO categorias (nombre, id_estado) VALUES (%s, %s)",
             (nombre, 1)
         )
         conn.commit()
         return jsonify({"ok": True})
-        
     except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"❌ Error en AddCategoria: {e}")
+        conn.rollback()
         return jsonify({"ok": False, "error": str(e)}), 500
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        cursor.close()
+        conn.close()
 
 
 @app.route("/GetGeneros", methods=["GET"])
 def get_generos():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT id_genero, nombre
-            FROM generos
-            WHERE id_estado = 1
-        """)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetGeneros: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT id_genero, nombre
+        FROM generos
+        WHERE id_estado = 1
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetColores", methods=["GET"])
 def get_colores():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT id_color, nombre FROM colores WHERE id_estado = 1 ORDER BY nombre")
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetColores: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT id_color, nombre FROM colores WHERE id_estado = 1 ORDER BY nombre")
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
-@app.route("/AddColor", methods=["POST"])
+@app.route("/AddColor", methods=["POST",])
 def add_color():
+
     data = request.get_json()
     nombre = data["nombre"]
 
-    conn = None
-    cursor = None
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"ok": False, "error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO colores (nombre, id_estado) VALUES (%s, %s)",
+        (nombre, 1)
+    )
 
-        cursor.execute(
-            "INSERT INTO colores (nombre, id_estado) VALUES (%s, %s)",
-            (nombre, 1)
-        )
+    conn.commit()
+    cursor.close()
+    conn.close()
 
-        conn.commit()
-        return jsonify({"ok": True})
-        
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        print(f"❌ Error en AddColor: {e}")
-        return jsonify({"ok": False, "error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    return jsonify({"ok": True})
 
 
 @app.route("/GetTallas", methods=["GET"])
 def get_tallas():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("SELECT id_talla, valor, id_genero FROM tallas ORDER BY valor")
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetTallas: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("SELECT id_talla, valor, id_genero FROM tallas ORDER BY valor")
+    data = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetTallasPorCategoriaGenero", methods=["GET"])
 def get_tallas_por_categoria_genero():
+        
     id_categoria = request.args.get("id_categoria")
     id_genero = request.args.get("id_genero")
 
     if not id_categoria or not id_genero:
         return jsonify([])
 
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT valor, id_talla 
-            FROM tallas
-            WHERE id_categoria = %s
-              AND id_genero = %s
-              AND id_estado = 1
-            ORDER BY id_talla
-        """, (id_categoria, id_genero))
+    cursor.execute("""
+        SELECT DISTINCT valor, id_talla 
+        FROM tallas
+        WHERE id_categoria = %s
+          AND id_genero = %s
+          AND id_estado = 1
+        ORDER BY id_talla
+    """, (id_categoria, id_genero))
 
-        data = cursor.fetchall()
-        return jsonify(data)
-        
-    except Exception as e:
-        print(f"❌ Error en GetTallasPorCategoriaGenero: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetTallasPorCategoria", methods=["GET"])
 def get_tallas_por_categoria():
+        
     id_categoria = request.args.get("id_categoria")
 
     if not id_categoria:
         return jsonify([])
 
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT valor AS talla
-            FROM tallas
-            WHERE id_categoria = %s
-              AND id_estado = 1
-            ORDER BY valor
-        """, (id_categoria,))
+    cursor.execute("""
+        SELECT DISTINCT valor AS talla
+        FROM tallas
+        WHERE id_categoria = %s
+          AND id_estado = 1
+        ORDER BY valor
+    """, (id_categoria,))
 
-        data = cursor.fetchall()
-        return jsonify(data)
-        
-    except Exception as e:
-        print(f"❌ Error en GetTallasPorCategoria: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetEstilosUnicos", methods=["GET"])
 def get_estilos_unicos():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT DISTINCT
-                TRIM(LOWER(nombre)) AS nombre
-            FROM estilos
-            WHERE id_estado = 1
-            ORDER BY nombre
-        """)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetEstilosUnicos: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT DISTINCT
+            TRIM(LOWER(nombre)) AS nombre
+        FROM estilos
+        WHERE id_estado = 1
+        ORDER BY nombre
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetTallasValidas", methods=["GET"])
 def get_tallas_validas():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        id_categoria = request.args.get("id_categoria", type=int)
-
-        query = """
-            SELECT DISTINCT t.valor AS talla
-            FROM variantes v
-            INNER JOIN tallas t ON v.id_talla = t.id_talla
-            WHERE v.id_estado = 1 and t.id_estado = 1
-        """
-
-        params = []
-        if id_categoria:
-            query += " AND t.id_categoria = %s"
-            params.append(id_categoria)
-
-        query += " ORDER BY t.valor"
-
-        cursor.execute(query, params)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetTallasValidas: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    id_categoria = request.args.get("id_categoria", type=int)
+
+    query = """
+        SELECT DISTINCT t.valor AS talla
+        FROM variantes v
+        INNER JOIN tallas t ON v.id_talla = t.id_talla
+        WHERE v.id_estado = 1 and t.id_estado = 1
+    """
+
+    params = []
+    if id_categoria:
+        query += " AND t.id_categoria = %s"
+        params.append(id_categoria)
+
+    query += " ORDER BY t.valor"
+
+    cursor.execute(query, params)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/GetNombresProductos", methods=["GET"])
 def get_nombres_productos():
-    conn = None
-    cursor = None
-    
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
-
-        cursor.execute("""
-            SELECT
-                TRIM(LOWER(nombre)) AS nombre
-            FROM productos
-            WHERE id_estado = 1
-            GROUP BY TRIM(LOWER(nombre))
-            ORDER BY nombre
-        """)
-
-        data = cursor.fetchall()
-        return jsonify(data)
         
-    except Exception as e:
-        print(f"❌ Error en GetNombresProductos: {e}")
-        return jsonify({"error": str(e)}), 500
-    finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    cursor.execute("""
+        SELECT
+            TRIM(LOWER(nombre)) AS nombre
+        FROM productos
+        WHERE id_estado = 1
+        GROUP BY TRIM(LOWER(nombre))
+        ORDER BY nombre
+    """)
+
+    data = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify(data)
 
 
 @app.route("/InformationGeneral", methods=["GET"])
 def reporte_general():
-    conn = None
-    cursor = None
     
-    try:
-        conn = get_connection()
-        if not conn:
-            return jsonify({"error": "Error de conexión"}), 503
-            
-        cursor = conn.cursor(dictionary=True)
+    conn = get_connection()
+    cursor = conn.cursor(dictionary=True)
 
+    try:        
         def clean(val):
             return None if val in [None, "", "null", "undefined"] else val
         
@@ -1281,29 +1059,22 @@ def reporte_general():
         })
 
     except Exception as e:
-        print(f"❌ DEBUG ERROR: {e}") 
+        print(f"DEBUG ERROR: {str(e)}") 
         return jsonify({"error": str(e)}), 500
 
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        cursor.close()
+        conn.close()
 
 
 # ============================================
-# MANEJO DE SEÑALES GRACEFUL SHUTDOWN
+# HEALTH CHECK
 # ============================================
-def graceful_shutdown(signum, frame):
-    """Maneja el cierre graceful del servidor"""
-    print(f"\n🔔 Recibida señal {signum}. Cerrando servidor gracefully...")
-    sys.exit(0)
-
-signal.signal(signal.SIGTERM, graceful_shutdown)
-signal.signal(signal.SIGINT, graceful_shutdown)
+@app.route("/")
+def health():
+    return jsonify({"status": "ok", "message": "API funcionando correctamente"})
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    print(f"🚀 Iniciando servidor en puerto {port}")
     app.run(host="0.0.0.0", port=port, debug=False)
