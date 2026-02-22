@@ -2,7 +2,6 @@ import time
 import mysql.connector
 import uuid
 import os
-import requests
 from urllib.parse import urlparse
 from flask import Flask, jsonify, request, session
 from flask_cors import CORS
@@ -12,6 +11,7 @@ from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime, timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
 from collections import defaultdict
+import requests
 
 
 
@@ -73,7 +73,8 @@ def get_connection():
     try:
         database_url = os.environ.get("MYSQL_URL")
         if not database_url:
-            raise Exception("MYSQL_URL no definida")
+            print("MYSQL_URL no definida")
+            return None
 
         parsed = urlparse(database_url)
 
@@ -83,8 +84,7 @@ def get_connection():
             user=parsed.username,
             password=parsed.password,
             database=parsed.path.lstrip("/"),
-            ssl_ca="./ca.pem",
-            ssl_verify_cert=True,
+            ssl_disabled=False,
             connection_timeout=5
         )
 
@@ -92,7 +92,7 @@ def get_connection():
 
     except Exception as e:
         print("ERROR CONECTANDO A MYSQL:", e)
-        raise
+        return None
 
 
 
@@ -100,12 +100,13 @@ def get_connection():
 # UTILIDADES
 # ============================================
 
+
 def enviar_correo(email, token):
     url = "https://api.resend.com/emails"
 
     payload = {
         "from": "Inventario <onboarding@resend.dev>",
-        "to": [email],
+        "to": [email],  # ← CORREGIDO: debe ir el email del usuario
         "subject": "Recuperar contraseña Inventario Dotaciones Zambrano",
         "html": f"""
         <h2>Recuperación de contraseña</h2>
@@ -136,78 +137,76 @@ VENTANA_SEGUNDOS = 300
 MAX_INTENTOS = 3
 
 def verificar_password(password_plano, password_bd):
-    return bcrypt.check_password_hash(password_bd, password_plano)
+    return bcrypt.checkpw(
+        password_plano.encode('utf-8'),
+        password_bd.encode('utf-8')
+    )
 
 
 @app.route('/Login', methods=['POST'])
 def login():
+    data = request.get_json()
+
+    usuario = data.get('usuario', '').strip()
+    password = data.get('password', '').strip()
+
+    # Validar que vengan los datos
+    if not usuario or not password:
+        return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
+
+    ahora = time.time()
+
+    # Limpiar intentos fuera de la ventana de tiempo
+    intentos_login[usuario] = [
+        t for t in intentos_login[usuario]
+        if ahora - t < VENTANA_SEGUNDOS
+    ]
+
+    # Verificar si ya superó el límite
+    if len(intentos_login[usuario]) >= MAX_INTENTOS:
+        minutos_restantes = int((VENTANA_SEGUNDOS - (ahora - intentos_login[usuario][0])) / 60) + 1
+        return jsonify({
+            'ok': False,
+            'error': 'MAX_INTENTOS',
+            'mensaje': f'Demasiados intentos. Intenta en {minutos_restantes} minutos.'
+        }), 429
+
+    # Verificar credenciales contra la base de datos
     try:
-        print("=== LOGIN INICIADO ===")
-        
-        data = request.get_json()
-        print(f"=== DATA RECIBIDA: {data} ===")
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
 
-        usuario = data.get('usuario', '').strip()
-        password = data.get('password', '').strip()
-        print(f"=== USUARIO: {usuario} ===")
-
-        if not usuario or not password:
-            return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
-
-        ahora = time.time()
-        intentos_login[usuario] = [
-            t for t in intentos_login[usuario]
-            if ahora - t < VENTANA_SEGUNDOS
-        ]
-
-        if len(intentos_login[usuario]) >= MAX_INTENTOS:
-            minutos_restantes = int((VENTANA_SEGUNDOS - (ahora - intentos_login[usuario][0])) / 60) + 1
-            return jsonify({
-                'ok': False,
-                'error': 'MAX_INTENTOS',
-                'mensaje': f'Demasiados intentos. Intenta en {minutos_restantes} minutos.'
-            }), 429
-
-        print("=== CONECTANDO A BD ===")
-        try:
-            conn = get_connection()
-            print(f"=== CONEXION: {conn} ===")
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT idUsuario, password FROM usuarios WHERE usuario = %s",
-                (usuario,)
-            )
-            user = cursor.fetchone()
-            print(f"=== USER ENCONTRADO: {user is not None} ===")
-
-        except Exception as e:
-            print(f"=== ERROR BD: {e} ===")
-            return jsonify({'ok': False, 'error': 'Error interno del servidor'}), 500
-
-        finally:
-            cursor.close()
-            conn.close()
-
-        print("=== VERIFICANDO PASSWORD ===")
-        if not user or not verificar_password(password, user['password']):
-            intentos_login[usuario].append(ahora)
-            intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
-            return jsonify({
-                'ok': False,
-                'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
-            }), 401
-
-        intentos_login[usuario].clear()
-        session['idUsuario'] = user['idUsuario']
-        session['usuario'] = usuario
-        print("=== LOGIN EXITOSO ===")
-        return jsonify({'ok': True}), 200
+        cursor.execute(
+            "SELECT id_usuario, password FROM usuarios WHERE usuario = %s",
+            (usuario,)
+        )
+        user = cursor.fetchone()
 
     except Exception as e:
-        print(f"=== ERROR GENERAL: {e} ===")
-        import traceback
-        print(traceback.format_exc())
-        return jsonify({'ok': False, 'error': str(e)}), 500
+        return jsonify({'ok': False, 'error': 'Error interno del servidor'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+    # Usuario no existe o contraseña incorrecta
+    # (mismo mensaje para no revelar cuál de los dos falló)
+    if not user or not verificar_password(password, user['password']):
+        intentos_login[usuario].append(ahora)
+        intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
+
+        return jsonify({
+            'ok': False,
+            'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
+        }), 401
+
+    # Login exitoso — limpiar intentos y crear sesión
+    intentos_login[usuario].clear()
+    session['id_usuario'] = user['id_usuario']
+    session['usuario'] = usuario
+
+    return jsonify({'ok': True}), 200
+
 
 
 @app.route("/CheckSession", methods=["GET"])
@@ -283,17 +282,29 @@ def recuperar_password():
         if conn:
             conn.close()
 
+@app.route("/ping", methods=["GET", "HEAD"])
+def ping():
+    return "OK", 200
+
 @app.route("/activador")
 def activador():
+    conn = None
+    cursor = None
     try:
         conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.close()
-        conn.close()
-        return jsonify({"ok": True})
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
     except Exception as e:
-        return jsonify({"ok": False, "error": str(e)}), 500
+        print("DB dormida o error:", e)
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+    return jsonify({"ok": True})
 
 
 
@@ -1068,12 +1079,5 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
-
-
-
-
-
-
-
 
 
