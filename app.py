@@ -164,68 +164,47 @@ def verificar_password(password_plano, password_bd):
 
 @app.route('/Login', methods=['POST'])
 def login():
-    data = request.get_json()
+    conn = None
+    cursor = None
 
-    usuario = data.get('usuario', '').strip()
-    password = data.get('password', '').strip()
-
-    # Validar que vengan los datos
-    if not usuario or not password:
-        return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
-
-    ahora = time.time()
-
-    # Limpiar intentos fuera de la ventana de tiempo
-    intentos_login[usuario] = [
-        t for t in intentos_login[usuario]
-        if ahora - t < VENTANA_SEGUNDOS
-    ]
-
-    # Verificar si ya superó el límite
-    if len(intentos_login[usuario]) >= MAX_INTENTOS:
-        minutos_restantes = int((VENTANA_SEGUNDOS - (ahora - intentos_login[usuario][0])) / 60) + 1
-        return jsonify({
-            'ok': False,
-            'error': 'MAX_INTENTOS',
-            'mensaje': f'Demasiados intentos. Intenta en {minutos_restantes} minutos.'
-        }), 429
-
-    # Verificar credenciales contra la base de datos
     try:
+        data = request.get_json()
+
+        usuario = data.get('usuario', '').strip()
+        password = data.get('password', '').strip()
+
+        if not usuario or not password:
+            return jsonify({'ok': False, 'error': 'Completa todos los campos'}), 400
+
         conn = get_connection()
+        if not conn:
+            return jsonify({'ok': False, 'error': 'DB no disponible'}), 500
+
         cursor = conn.cursor(dictionary=True)
 
         cursor.execute(
-            "SELECT id_usuario, password FROM usuarios WHERE usuario = %s",
+            "SELECT idUsuario, password FROM usuarios WHERE usuario = %s",
             (usuario,)
         )
         user = cursor.fetchone()
 
+        if not user or not verificar_password(password, user['password']):
+            return jsonify({'ok': False, 'error': 'Credenciales inválidas'}), 401
+
+        session['idUsuario'] = user['idUsuario']
+        session['usuario'] = usuario
+
+        return jsonify({'ok': True}), 200
+
     except Exception as e:
-        return jsonify({'ok': False, 'error': 'Error interno del servidor'}), 500
+        print("ERROR LOGIN:", e)
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
     finally:
-        cursor.close()
-        conn.close()
-
-    # Usuario no existe o contraseña incorrecta
-    # (mismo mensaje para no revelar cuál de los dos falló)
-    if not user or not verificar_password(password, user['password']):
-        intentos_login[usuario].append(ahora)
-        intentos_restantes = MAX_INTENTOS - len(intentos_login[usuario])
-
-        return jsonify({
-            'ok': False,
-            'error': f'Credenciales inválidas. Intentos restantes: {intentos_restantes}'
-        }), 401
-
-    # Login exitoso — limpiar intentos y crear sesión
-    intentos_login[usuario].clear()
-    session['id_usuario'] = user['id_usuario']
-    session['usuario'] = usuario
-
-    return jsonify({'ok': True}), 200
-
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 
 @app.route("/CheckSession", methods=["GET"])
@@ -1073,5 +1052,6 @@ def health():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port, debug=False)
+
 
 
