@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Resumen General</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm;
+    }
+
+    :root {
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #d9e2ec;
+      --surface-soft: #f8fafc;
+      --accent: #0284c7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .report {
+      display: grid;
+      gap: 14px;
+    }
+
+    .report-header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .logo-box {
+      width: 76px;
+      height: 76px;
+      border: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .logo-fallback {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .report-title {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+
+    .company-name {
+      margin: 0 0 4px;
+      font-size: 18px;
+      color: var(--accent);
+    }
+
+    .meta,
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 18px;
+      color: var(--muted);
+    }
+
+    .meta strong,
+    .filters strong {
+      color: var(--text);
+    }
+
+    .totals {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .total-box {
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      padding: 10px 12px;
+    }
+
+    .total-box span {
+      display: block;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .total-box strong {
+      font-size: 22px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-soft);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fcfdff;
+    }
+
+    .empty {
+      padding: 18px 0;
+      text-align: center;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="report">
+    <header class="report-header">
+      <div class="logo-box">
+        {% if empresa_logo %}
+        <img src="{{ empresa_logo }}" alt="Logo">
+        {% else %}
+        <div class="logo-fallback">LOGO</div>
+        {% endif %}
+      </div>
+
+      <div>
+        <h1 class="report-title">Resumen general</h1>
+        <h2 class="company-name">{{ empresa_nombre or 'Nombre de la empresa' }}</h2>
+
+        <div class="meta">
+          <span><strong>Direccion:</strong> {{ empresa_direccion or 'Direccion' }}</span>
+          <span><strong>Celular:</strong> {{ empresa_celular or 'Celular' }}</span>
+          <span><strong>Fecha:</strong> {{ fecha_generacion or 'Sin fecha' }}</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="filters">
+      {% for label, value in filtros.items() %}
+      <span><strong>{{ label }}:</strong> {{ value or 'Todos' }}</span>
+      {% endfor %}
+    </section>
+
+    <section class="totals">
+      <div class="total-box">
+        <span>Cantidad total</span>
+        <strong>{{ cantidad_total or 0 }}</strong>
+      </div>
+
+      <div class="total-box">
+        <span>Valor total</span>
+        <strong>{{ valor_total or '$ 0' }}</strong>
+      </div>
+    </section>
+
+    {% if filas %}
+    <table>
+      <thead>
+        <tr>
+          {% for columna in columnas %}
+          <th>{{ columna }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          {% for columna in columnas %}
+          <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No hay datos para este resumen.</div>
+    {% endif %}
+  </main>
+</body>
+</html>
