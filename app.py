@@ -2,8 +2,9 @@ import time
 import mysql.connector
 import uuid
 import os
+from io import BytesIO
 from urllib.parse import urlparse
-from flask import Flask, jsonify, request, session
+from flask import Flask, jsonify, request, session, render_template, make_response
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
@@ -12,6 +13,11 @@ from datetime import datetime, timedelta
 from werkzeug.middleware.proxy_fix import ProxyFix
 from collections import defaultdict
 import requests
+
+try:
+    from xhtml2pdf import pisa
+except ImportError:
+    pisa = None
 
 app = Flask(__name__)
 
@@ -840,21 +846,31 @@ def get_colores():
 def add_color():
 
     data = request.get_json()
-    nombre = data["nombre"]
+    nombre = data.get("nombre", "").strip()
+
+    if not nombre:
+        return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "INSERT INTO colores (nombre, id_estado) VALUES (%s, %s)",
-        (nombre, 1)
-    )
+    try:
+        cursor.execute(
+            "INSERT INTO colores (nombre, id_estado) VALUES (%s, %s)",
+            (nombre, 1)
+        )
+        conn.commit()
 
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({"ok": True})
+        return jsonify({
+            "ok": True,
+            "id_color": cursor.lastrowid
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"ok": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
 @app.route("/GetTallas", methods=["GET"])
@@ -1002,43 +1018,151 @@ def get_nombres_productos():
 
 @app.route("/InformationGeneral", methods=["GET"])
 def reporte_general():
-    
-    conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
-
     try:        
-        def clean(val):
-            return None if val in [None, "", "null", "undefined"] else val
-        
-        args = (
-            clean(request.args.get('categoria')),
-            clean(request.args.get('genero')),
-            clean(request.args.get('producto')),
-            clean(request.args.get('talla')),
-            clean(request.args.get('estilo'))
-        )
-        
-        cursor.callproc("InformationGeneral", args)
-        
-        rows = []
-        columns = []
-
-        for result in cursor.stored_results():
-            columns = result.column_names
-            rows = result.fetchall()
-
-        return jsonify({
-            "columns": columns,
-            "rows": rows
-        })
+        data = obtener_reporte_general_data()
+        return jsonify(data)
 
     except Exception as e:
         print(f"DEBUG ERROR: {str(e)}") 
         return jsonify({"error": str(e)}), 500
 
+def clean_report_param(val):
+    return None if val in [None, "", "null", "undefined"] else val
+
+
+def obtener_reporte_general_data():
+    conn = get_connection()
+    if conn is None:
+        raise RuntimeError("No se pudo conectar a la base de datos")
+
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        args = (
+            clean_report_param(request.args.get('categoria')),
+            clean_report_param(request.args.get('genero')),
+            clean_report_param(request.args.get('producto')),
+            clean_report_param(request.args.get('talla')),
+            clean_report_param(request.args.get('estilo'))
+        )
+
+        cursor.callproc("InformationGeneral", args)
+
+        rows = []
+        columns = []
+
+        for result in cursor.stored_results():
+            columns = list(result.column_names)
+            rows = result.fetchall()
+
+        return {
+            "columns": columns,
+            "rows": rows
+        }
     finally:
         cursor.close()
         conn.close()
+
+
+def parse_report_number(value):
+    if value is None:
+        return 0
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    text = str(value).strip()
+    if not text:
+        return 0
+
+    cleaned = ''.join(ch for ch in text if ch.isdigit())
+    return float(cleaned) if cleaned else 0
+
+
+def format_number_es(value):
+    return f"{int(round(value)):,}".replace(",", ".")
+
+
+def format_currency_es(value):
+    return f"$ {format_number_es(value)}"
+
+
+def calcular_totales_reporte(rows):
+    cantidad_total = 0
+    valor_total = 0
+
+    for row in rows:
+        cantidad_total += parse_report_number(row.get("Cantidad"))
+        valor_total += parse_report_number(row.get("Total"))
+
+    return {
+        "cantidad_total_num": int(cantidad_total),
+        "cantidad_total": format_number_es(cantidad_total),
+        "valor_total_num": int(valor_total),
+        "valor_total": format_currency_es(valor_total)
+    }
+
+
+def build_reporte_pdf_context():
+    data = obtener_reporte_general_data()
+    totals = calcular_totales_reporte(data["rows"])
+
+    filtros = {
+        "Categoria": clean_report_param(request.args.get("categoria")) or "Todos",
+        "Genero": clean_report_param(request.args.get("genero")) or "Todos",
+        "Producto": clean_report_param(request.args.get("producto")) or "Todos",
+        "Talla": clean_report_param(request.args.get("talla")) or "Todos",
+        "Estilo": clean_report_param(request.args.get("estilo")) or "Todos"
+    }
+
+    return {
+        "empresa_nombre": os.environ.get("REPORT_COMPANY_NAME", "Nombre de la empresa"),
+        "empresa_logo": os.environ.get("REPORT_COMPANY_LOGO", ""),
+        "empresa_direccion": os.environ.get("REPORT_COMPANY_ADDRESS", "Direccion de la empresa"),
+        "empresa_celular": os.environ.get("REPORT_COMPANY_PHONE", "Numero de celular"),
+        "fecha_generacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "filtros": filtros,
+        "columnas": data["columns"],
+        "filas": data["rows"],
+        "cantidad_total": totals["cantidad_total"],
+        "valor_total": totals["valor_total"]
+    }
+
+
+@app.route("/InformationGeneralPdf", methods=["GET"])
+def reporte_general_pdf():
+    try:
+        context = build_reporte_pdf_context()
+        html = render_template("information_general_pdf.html", **context)
+
+        output_format = request.args.get("format", "pdf").strip().lower()
+
+        if output_format == "html":
+            return html
+
+        if output_format != "pdf":
+            return jsonify({"error": "Formato no soportado. Usa html o pdf"}), 400
+
+        if pisa is None:
+            return jsonify({
+                "error": "La libreria xhtml2pdf no esta instalada en el servidor"
+            }), 500
+
+        pdf_buffer = BytesIO()
+        pdf = pisa.CreatePDF(html, dest=pdf_buffer, encoding="utf-8")
+
+        if pdf.err:
+            return jsonify({"error": "No se pudo generar el PDF"}), 500
+
+        response = make_response(pdf_buffer.getvalue())
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="resumen_general_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf"'
+        )
+        return response
+    except Exception as e:
+        print(f"DEBUG PDF ERROR: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 # ============================================
