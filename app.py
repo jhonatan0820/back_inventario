@@ -4,7 +4,7 @@ import uuid
 import os
 from io import BytesIO
 from urllib.parse import urlparse
-from flask import Flask, jsonify, request, session, render_template, make_response
+from flask import Flask, jsonify, request, session, render_template_string, make_response
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from flask_bcrypt import Bcrypt
@@ -1129,11 +1129,21 @@ def build_reporte_pdf_context():
     }
 
 
+def load_report_template():
+    template_path = os.path.join(
+        os.path.dirname(__file__),
+        "information_general_pdf.html"
+    )
+
+    with open(template_path, "r", encoding="utf-8") as template_file:
+        return template_file.read()
+
+
 @app.route("/InformationGeneralPdf", methods=["GET"])
 def reporte_general_pdf():
     try:
         context = build_reporte_pdf_context()
-        html = render_template("information_general_pdf.html", **context)
+        html = render_template_string(load_report_template(), **context)
 
         output_format = request.args.get("format", "pdf").strip().lower()
 
