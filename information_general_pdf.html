@@ -6,208 +6,364 @@
   <style>
     @page {
       size: A4;
-      margin: 18mm 14mm;
-    }
-
-    :root {
-      --text: #0f172a;
-      --muted: #64748b;
-      --border: #d9e2ec;
-      --surface-soft: #f8fafc;
-      --accent: #0284c7;
-    }
-
-    * {
-      box-sizing: border-box;
+      margin: 16mm 12mm;
     }
 
     body {
       margin: 0;
-      color: var(--text);
+      padding: 0;
+      background: #eef3f8;
+      color: #162033;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 12px;
-      line-height: 1.45;
+      font-size: 11px;
+      line-height: 1.4;
     }
 
     .report {
-      display: grid;
-      gap: 14px;
+      width: 100%;
     }
 
-    .report-header {
-      display: grid;
-      grid-template-columns: auto 1fr;
-      gap: 14px;
-      align-items: center;
-      padding-bottom: 12px;
-      border-bottom: 2px solid var(--border);
+    .accent-line {
+      height: 6px;
+      margin-bottom: 10px;
+      background: #0f9bd7;
+    }
+
+    .card {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border: 1px solid #d5dde8;
+      background: #ffffff;
+    }
+
+    .header-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 0;
+    }
+
+    .header-table td {
+      vertical-align: top;
+      padding: 0;
+      border: none;
+    }
+
+    .logo-cell {
+      width: 92px;
+      padding-right: 16px;
     }
 
     .logo-box {
       width: 76px;
       height: 76px;
-      border: 1px solid var(--border);
-      display: grid;
-      place-items: center;
-      overflow: hidden;
+      border: 1px solid #d5dde8;
+      background: #f7fafc;
+      text-align: center;
+      vertical-align: middle;
     }
 
     .logo-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      width: 76px;
+      height: auto;
+      max-height: 76px;
     }
 
     .logo-fallback {
       font-size: 11px;
-      color: var(--muted);
+      color: #64748b;
+      padding-top: 30px;
     }
 
     .report-title {
-      margin: 0 0 6px;
+      margin: 0 0 4px 0;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #0f9bd7;
+    }
+
+    .company-row {
+      margin: 0 0 4px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e6edf5;
+    }
+
+    .company-row strong {
+      display: block;
+      margin-bottom: 2px;
       font-size: 22px;
+      font-weight: bold;
     }
 
     .company-name {
-      margin: 0 0 4px;
-      font-size: 18px;
-      color: var(--accent);
+      font-size: 12px;
+      color: #5d6c80;
     }
 
-    .meta,
-    .filters {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 18px;
-      color: var(--muted);
+    .meta-line {
+      margin: 0 0 3px 0;
+      color: #5d6c80;
     }
 
-    .meta strong,
-    .filters strong {
-      color: var(--text);
+    .meta-line strong {
+      color: #162033;
     }
 
-    .totals {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    .filters-box {
+      margin-bottom: 0;
+    }
+
+    .filters-title {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .filters-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .filters-table td {
+      width: 50%;
+      padding: 0 6px 8px 0;
+      border: none;
+      vertical-align: top;
+    }
+
+    .filters-table td.right {
+      padding: 0 0 8px 6px;
+    }
+
+    .filter-box {
+      padding: 8px 10px;
+      border: 1px solid #dbe4ee;
+      background: #f8fafc;
+    }
+
+    .filter-label {
+      margin: 0 0 3px 0;
+      font-size: 9px;
+      font-weight: bold;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #7b8a9d;
+    }
+
+    .filter-value {
+      margin: 0;
+      font-size: 12px;
+      font-weight: bold;
+      color: #162033;
+    }
+
+    .totals-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 12px;
+    }
+
+    .totals-table td {
+      width: 50%;
+      padding: 0 5px 0 0;
+      border: none;
+      vertical-align: top;
+    }
+
+    .totals-table td.last {
+      padding: 0 0 0 5px;
     }
 
     .total-box {
-      border: 1px solid var(--border);
-      background: var(--surface-soft);
-      padding: 10px 12px;
+      padding: 0;
+      border: 1px solid #d5dde8;
+      background: #ffffff;
     }
 
-    .total-box span {
+    .total-bar {
+      height: 4px;
+      background: #0f9bd7;
+    }
+
+    .total-content {
+      padding: 10px 12px 12px 12px;
+    }
+
+    .total-label {
       display: block;
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 4px;
+      margin-bottom: 5px;
+      font-size: 10px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #7b8a9d;
     }
 
-    .total-box strong {
-      font-size: 22px;
+    .total-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #162033;
     }
 
-    table {
+    .table-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .table-header {
+      padding: 10px 12px;
+      border-bottom: 1px solid #dbe4ee;
+      background: #f8fafc;
+    }
+
+    .table-title {
+      margin: 0 0 2px 0;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .table-subtitle {
+      margin: 0;
+      font-size: 10px;
+      color: #6b7a8d;
+    }
+
+    table.report-table {
       width: 100%;
       border-collapse: collapse;
     }
 
-    thead {
-      display: table-header-group;
-    }
-
-    th,
-    td {
-      border: 1px solid var(--border);
-      padding: 8px 10px;
+    table.report-table th,
+    table.report-table td {
+      border: 1px solid #dbe4ee;
+      padding: 7px 9px;
       text-align: left;
       vertical-align: top;
     }
 
-    th {
-      background: var(--surface-soft);
+    table.report-table th {
+      background: #edf4fa;
       font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    tbody tr:nth-child(even) {
-      background: #fcfdff;
+      font-weight: bold;
+      color: #405065;
     }
 
     .empty {
-      padding: 18px 0;
+      padding: 18px 12px;
       text-align: center;
-      color: var(--muted);
+      color: #64748b;
     }
   </style>
 </head>
 <body>
-  <main class="report">
-    <header class="report-header">
-      <div class="logo-box">
-        {% if empresa_logo %}
-        <img src="{{ empresa_logo }}" alt="Logo">
-        {% else %}
-        <div class="logo-fallback">LOGO</div>
+  <div class="report">
+    <div class="accent-line"></div>
+
+    <div class="card">
+      <table class="header-table">
+        <tr>
+          <td class="logo-cell">
+            <div class="logo-box">
+              {% if empresa_logo %}
+              <img src="{{ empresa_logo }}" alt="Logo">
+              {% else %}
+              <div class="logo-fallback">LOGO</div>
+              {% endif %}
+            </div>
+          </td>
+          <td>
+            <p class="report-title">Resumen general</p>
+            <p class="company-row">
+              <strong>{{ empresa_nombre or 'Nombre de la empresa' }}</strong>
+              <span class="company-name">Reporte consolidado de inventario</span>
+            </p>
+            <p class="meta-line"><strong>Direccion:</strong> {{ empresa_direccion or 'Direccion' }}</p>
+            <p class="meta-line"><strong>Celular:</strong> {{ empresa_celular or 'Celular' }}</p>
+            <p class="meta-line"><strong>Fecha:</strong> {{ fecha_generacion or 'Sin fecha' }}</p>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card filters-box">
+      <p class="filters-title">Filtros aplicados</p>
+      <table class="filters-table">
+        {% for label, value in filtros.items() %}
+        {% if loop.index0 is divisibleby 2 %}
+        <tr>
         {% endif %}
-      </div>
+          <td{% if loop.index0 is odd %} class="right"{% endif %}>
+            <div class="filter-box">
+              <p class="filter-label">{{ label }}</p>
+              <p class="filter-value">{{ value or 'Todos' }}</p>
+            </div>
+          </td>
+        {% if loop.index0 is odd or loop.last %}
+          {% if loop.index0 is even %}
+          <td class="right"></td>
+          {% endif %}
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </table>
+    </div>
 
-      <div>
-        <h1 class="report-title">Resumen general</h1>
-        <h2 class="company-name">{{ empresa_nombre or 'Nombre de la empresa' }}</h2>
-
-        <div class="meta">
-          <span><strong>Direccion:</strong> {{ empresa_direccion or 'Direccion' }}</span>
-          <span><strong>Celular:</strong> {{ empresa_celular or 'Celular' }}</span>
-          <span><strong>Fecha:</strong> {{ fecha_generacion or 'Sin fecha' }}</span>
-        </div>
-      </div>
-    </header>
-
-    <section class="filters">
-      {% for label, value in filtros.items() %}
-      <span><strong>{{ label }}:</strong> {{ value or 'Todos' }}</span>
-      {% endfor %}
-    </section>
-
-    <section class="totals">
-      <div class="total-box">
-        <span>Cantidad total</span>
-        <strong>{{ cantidad_total or 0 }}</strong>
-      </div>
-
-      <div class="total-box">
-        <span>Valor total</span>
-        <strong>{{ valor_total or '$ 0' }}</strong>
-      </div>
-    </section>
+    <table class="totals-table">
+      <tr>
+        <td>
+          <div class="total-box">
+            <div class="total-bar"></div>
+            <div class="total-content">
+              <span class="total-label">Cantidad total</span>
+              <span class="total-value">{{ cantidad_total or 0 }}</span>
+            </div>
+          </div>
+        </td>
+        <td class="last">
+          <div class="total-box">
+            <div class="total-bar"></div>
+            <div class="total-content">
+              <span class="total-label">Valor total</span>
+              <span class="total-value">{{ valor_total or '$ 0' }}</span>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
 
     {% if filas %}
-    <table>
-      <thead>
-        <tr>
-          {% for columna in columnas %}
-          <th>{{ columna }}</th>
+    <div class="card table-card">
+      <div class="table-header">
+        <p class="table-title">Detalle del resumen</p>
+        <p class="table-subtitle">{{ filas|length }} registros generados</p>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            {% for columna in columnas %}
+            <th>{{ columna }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in filas %}
+          <tr>
+            {% for columna in columnas %}
+            <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
+            {% endfor %}
+          </tr>
           {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for fila in filas %}
-        <tr>
-          {% for columna in columnas %}
-          <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
     {% else %}
-    <div class="empty">No hay datos para este resumen.</div>
+    <div class="card">
+      <div class="empty">No hay datos para este resumen.</div>
+    </div>
     {% endif %}
-  </main>
+  </div>
 </body>
 </html>
