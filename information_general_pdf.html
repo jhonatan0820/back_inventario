@@ -305,21 +305,17 @@
         <tr>
           <td class="logo-cell">
             <div class="logo-box">
-              {% if empresa_logo %}
-              <img src="{{ empresa_logo }}" alt="Logo">
-              {% else %}
-              <div class="logo-fallback">LOGO</div>
-              {% endif %}
+              <img src="Logo.jpg" alt="Logo">
             </div>
           </td>
           <td>
             <p class="report-title">Resumen general</p>
             <p class="company-row">
-              <strong>{{ empresa_nombre or 'Nombre de la empresa' }}</strong>
+              <strong>Dotaciones Zambrano</strong>
               <span class="company-name">Reporte consolidado de inventario</span>
             </p>
-            <p class="meta-line"><strong>Direccion:</strong> {{ empresa_direccion or 'Direccion' }}</p>
-            <p class="meta-line"><strong>Celular:</strong> {{ empresa_celular or 'Celular' }}</p>
+            <p class="meta-line"><strong>Direccion:</strong> Calle 70 sur # 91-40 </p>
+            <p class="meta-line"><strong>Celular:</strong> 313663168 </p>
             <p class="meta-line"><strong>Fecha:</strong> {{ fecha_generacion or 'Sin fecha' }}</p>
           </td>
         </tr>

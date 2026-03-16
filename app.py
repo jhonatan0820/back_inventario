@@ -1116,10 +1116,6 @@ def build_reporte_pdf_context():
     }
 
     return {
-        "empresa_nombre": os.environ.get("REPORT_COMPANY_NAME", "Nombre de la empresa"),
-        "empresa_logo": os.environ.get("REPORT_COMPANY_LOGO", ""),
-        "empresa_direccion": os.environ.get("REPORT_COMPANY_ADDRESS", "Direccion de la empresa"),
-        "empresa_celular": os.environ.get("REPORT_COMPANY_PHONE", "Numero de celular"),
         "fecha_generacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "filtros": filtros,
         "columnas": data["columns"],
