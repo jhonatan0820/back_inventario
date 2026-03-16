@@ -370,7 +370,7 @@
   </div>
 
   <!-- Info del reporte -->
-  <div class="info-card">
+  <div class="info-card" style="margin-top: 10px;">
     <table class="info-table">
       <tr>
         <td class="info-col-left">
@@ -392,23 +392,26 @@
   <div class="table-wrap">
     <div class="table-title">Detalle del resumen</div>
     <table class="main-table">
-      <colgroup>
-        {% for columna in columnas %}
-          {% if columna == 'Producto' %}   <col style="width:28%;">
-          {% elif columna == 'Estilo' %}   <col style="width:14%;">
-          {% elif columna == 'Color' %}    <col style="width:12%;">
-          {% elif columna == 'Talla' %}    <col style="width:8%;">
-          {% elif columna == 'Cantidad' %} <col style="width:9%;">
-          {% elif columna == 'Precio' %}   <col style="width:14%;">
-          {% elif columna == 'Total' %}    <col style="width:15%;">
-          {% else %}                       <col>
-          {% endif %}
-        {% endfor %}
-      </colgroup>
       <thead>
         <tr>
           {% for columna in columnas %}
-          <th>{{ columna }}</th>
+            {% if columna == 'Producto' %}
+            <th style="width:28%;">{{ columna }}</th>
+            {% elif columna == 'Estilo' %}
+            <th style="width:14%;">{{ columna }}</th>
+            {% elif columna == 'Color' %}
+            <th style="width:12%;">{{ columna }}</th>
+            {% elif columna == 'Talla' %}
+            <th style="width:8%;">{{ columna }}</th>
+            {% elif columna == 'Cantidad' %}
+            <th style="width:9%;">{{ columna }}</th>
+            {% elif columna == 'Precio' %}
+            <th style="width:14%;">{{ columna }}</th>
+            {% elif columna == 'Total' %}
+            <th style="width:15%;">{{ columna }}</th>
+            {% else %}
+            <th>{{ columna }}</th>
+            {% endif %}
           {% endfor %}
         </tr>
       </thead>
