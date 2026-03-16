@@ -227,12 +227,13 @@
     .main-table {
       width: 100%;
       border-collapse: collapse;
+      table-layout: fixed;
     }
 
     .main-table th,
     .main-table td {
       border: 1px solid #dbe3e8;
-      padding: 8px 9px;
+      padding: 5px 7px;
       text-align: left;
       vertical-align: top;
     }
@@ -248,6 +249,7 @@
     .main-table td {
       background: #ffffff;
       color: #27353c;
+      word-wrap: break-word;
     }
 
     .main-table tbody tr:nth-child(even) td {
@@ -372,6 +374,27 @@
     <div class="table-wrap">
       <div class="table-title">Detalle del resumen</div>
       <table class="main-table">
+        <colgroup>
+          {% for columna in columnas %}
+          {% if columna == 'Producto' %}
+          <col style="width: 28%;">
+          {% elif columna == 'Estilo' %}
+          <col style="width: 14%;">
+          {% elif columna == 'Color' %}
+          <col style="width: 13%;">
+          {% elif columna == 'Talla' %}
+          <col style="width: 9%;">
+          {% elif columna == 'Cantidad' %}
+          <col style="width: 9%;">
+          {% elif columna == 'Precio' %}
+          <col style="width: 13%;">
+          {% elif columna == 'Total' %}
+          <col style="width: 14%;">
+          {% else %}
+          <col>
+          {% endif %}
+          {% endfor %}
+        </colgroup>
         <thead>
           <tr>
             {% for columna in columnas %}
