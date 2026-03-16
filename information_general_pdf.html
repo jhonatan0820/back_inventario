@@ -321,112 +321,6 @@
       padding: 16px 10px;
     }
 
-    /* Ajustes compactos solo para PDF */
-    body.mode-pdf {
-      font-size: 8px;
-      line-height: 1.2;
-    }
-
-    body.mode-pdf .sheet {
-      padding: 10px 12px 12px 12px;
-    }
-
-    body.mode-pdf .frame-top,
-    body.mode-pdf .frame-bottom {
-      height: 4px;
-    }
-
-    body.mode-pdf .frame-top {
-      margin: -10px -12px 10px -12px;
-    }
-
-    body.mode-pdf .frame-bottom {
-      margin: 10px -12px -12px -12px;
-    }
-
-    body.mode-pdf .header {
-      margin-bottom: 10px;
-    }
-
-    body.mode-pdf .brand-name {
-      font-size: 15px;
-    }
-
-    body.mode-pdf .brand-kicker,
-    body.mode-pdf .brand-subtitle,
-    body.mode-pdf .meta-line {
-      font-size: 7px;
-    }
-
-    body.mode-pdf .logo-cell {
-      width: 84px;
-      padding-right: 10px;
-    }
-
-    body.mode-pdf .logo-box,
-    body.mode-pdf .logo-box img {
-      width: 70px;
-      max-height: 50px;
-      height: auto;
-    }
-
-    body.mode-pdf .title-block {
-      padding-top: 7px;
-      margin-bottom: 10px;
-    }
-
-    body.mode-pdf .title {
-      font-size: 18px;
-    }
-
-    body.mode-pdf .info-card {
-      padding: 8px 10px;
-      margin-bottom: 10px;
-    }
-
-    body.mode-pdf .info-line {
-      font-size: 8px;
-      margin-bottom: 5px;
-    }
-
-    body.mode-pdf .table-wrap {
-      margin-bottom: 10px;
-    }
-
-    body.mode-pdf .table-title {
-      font-size: 8px;
-      padding: 5px 8px;
-    }
-
-    body.mode-pdf .main-table th,
-    body.mode-pdf .main-table td {
-      font-size: 7px;
-      padding: 3px 5px;
-    }
-
-    body.mode-pdf .summary-card {
-      padding: 8px 10px;
-    }
-
-    body.mode-pdf .summary-title {
-      font-size: 8px;
-      margin-bottom: 6px;
-    }
-
-    body.mode-pdf .summary-line {
-      font-size: 8px;
-      margin-bottom: 6px;
-    }
-
-    body.mode-pdf .summary-value {
-      font-size: 8px;
-    }
-
-    body.mode-pdf .footer {
-      margin-top: 10px;
-      padding-top: 6px;
-      font-size: 7px;
-    }
   </style>
 </head>
 <body class="mode-{{ render_mode or 'html' }}">
@@ -545,8 +439,8 @@
         <td class="summary-card-cell">
           <div class="summary-card">
             <p class="summary-title">Resumen del inventario</p>
-            <p class="summary-line">Total registros <span class="summary-value">{{ total_registros }}</span></p>
-            <p class="summary-line">Cantidad total <span class="summary-value">{{ cantidad_total }}</span></p>
+            <p class="summary-line">Cantidad de productos <span class="summary-value">{{ total_registros }}</span></p>
+            <p class="summary-line">Cantidad total de productos <span class="summary-value">{{ cantidad_total }}</span></p>
             <p class="summary-line">Valor total inventario <span class="summary-value">{{ valor_total }}</span></p>
           </div>
         </td>
@@ -557,7 +451,7 @@
     {% endif %}
 
     <div class="footer">
-      {{ empresa_nombre or 'Dotaciones Zambrano' }} &copy; 2026 | Sistema de Inventario
+      {{ empresa_nombre or 'Dotaciones Zambrano' }} &copy; 2026 | Inventario.
     </div>
 
     <div class="frame-bottom"></div>
