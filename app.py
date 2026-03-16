@@ -2,6 +2,7 @@ import time
 import mysql.connector
 import uuid
 import os
+import base64
 from io import BytesIO
 from urllib.parse import urlparse
 from flask import Flask, jsonify, request, session, render_template_string, make_response
@@ -1103,6 +1104,21 @@ def calcular_totales_reporte(rows):
     }
 
 
+def get_report_logo_src():
+    env_logo = os.environ.get("REPORT_COMPANY_LOGO", "").strip()
+    if env_logo:
+        return env_logo
+
+    logo_path = os.path.join(os.path.dirname(__file__), "img", "Logo.jpg")
+    if not os.path.exists(logo_path):
+        return ""
+
+    with open(logo_path, "rb") as logo_file:
+        encoded = base64.b64encode(logo_file.read()).decode("ascii")
+
+    return f"data:image/jpeg;base64,{encoded}"
+
+
 def build_reporte_pdf_context():
     data = obtener_reporte_general_data()
     totals = calcular_totales_reporte(data["rows"])
@@ -1117,7 +1133,7 @@ def build_reporte_pdf_context():
 
     return {
         "empresa_nombre": os.environ.get("REPORT_COMPANY_NAME", "Dotaciones Zambrano"),
-        "empresa_logo": os.environ.get("REPORT_COMPANY_LOGO", ""),
+        "empresa_logo": get_report_logo_src(),
         "empresa_direccion": os.environ.get("REPORT_COMPANY_ADDRESS", "Calle 70 sur # 91-40"),
         "empresa_celular": os.environ.get("REPORT_COMPANY_PHONE", "3136673447"),
         "empresa_email": os.environ.get("REPORT_COMPANY_EMAIL", ""),

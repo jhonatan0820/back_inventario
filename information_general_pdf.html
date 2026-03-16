@@ -12,52 +12,52 @@
     body {
       margin: 0;
       padding: 0;
-      background: #edf2f5;
-      color: #1d2a32;
+      background: #eef2f4;
+      color: #233238;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 11px;
       line-height: 1.35;
     }
 
     .sheet {
-      padding: 14px 16px 18px 16px;
-      border: 1px solid #d9e2e8;
+      padding: 16px 18px 18px 18px;
+      border: 1px solid #d8e0e5;
       background: #ffffff;
     }
 
-    .top-accent,
-    .bottom-accent {
-      height: 7px;
-      background: #274840;
+    .frame-top,
+    .frame-bottom {
+      height: 8px;
+      background: #28463f;
     }
 
-    .top-accent {
-      margin: -14px -16px 16px -16px;
+    .frame-top {
+      margin: -16px -18px 18px -18px;
     }
 
-    .bottom-accent {
-      margin: 18px -16px -18px -16px;
+    .frame-bottom {
+      margin: 18px -18px -18px -18px;
     }
 
-    .header-table {
+    .header {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 16px;
     }
 
-    .header-table td {
+    .header td {
       border: none;
-      vertical-align: top;
       padding: 0;
+      vertical-align: top;
     }
 
-    .brand-cell {
-      width: 54%;
+    .brand {
+      width: 58%;
       padding-right: 16px;
     }
 
-    .contact-cell {
-      width: 46%;
+    .meta {
+      width: 42%;
       text-align: right;
     }
 
@@ -67,119 +67,121 @@
 
     .brand-table td {
       border: none;
-      vertical-align: middle;
       padding: 0;
+      vertical-align: middle;
     }
 
-    .logo-wrap {
-      width: 102px;
+    .logo-cell {
+      width: 118px;
       padding-right: 14px;
     }
 
     .logo-box {
-      width: 96px;
-      height: 72px;
+      width: 108px;
+      height: 84px;
       text-align: center;
       vertical-align: middle;
       overflow: hidden;
+      background: #ffffff;
     }
 
     .logo-box img {
-      width: 96px;
+      width: 108px;
       height: auto;
-      max-height: 72px;
+      max-height: 84px;
     }
 
     .logo-fallback {
-      font-size: 12px;
-      color: #75838f;
-      padding-top: 28px;
+      padding-top: 34px;
+      color: #76848d;
+      font-size: 11px;
+    }
+
+    .brand-kicker {
+      margin: 0 0 4px 0;
+      color: #5d6a72;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
     }
 
     .brand-name {
       margin: 0;
-      font-size: 13px;
+      color: #203933;
+      font-size: 20px;
       font-weight: bold;
-      letter-spacing: 1.4px;
-      color: #243b36;
+      letter-spacing: 1px;
       text-transform: uppercase;
     }
 
-    .brand-name.secondary {
-      margin-top: 2px;
-      font-size: 22px;
-      letter-spacing: 0.8px;
-    }
-
-    .brand-caption {
-      margin: 6px 0 0 0;
+    .brand-subtitle {
+      margin: 5px 0 0 0;
+      color: #6d7a83;
       font-size: 10px;
-      color: #6b7a84;
     }
 
-    .contact-box {
+    .meta-box {
       display: inline-block;
-      padding: 8px 10px;
-      border: 1px solid #dbe4ea;
-      background: #f7faf8;
+      padding: 10px 12px;
+      border: 1px solid #dde5ea;
+      background: #fafcfb;
       text-align: right;
     }
 
-    .contact-line {
+    .meta-line {
       margin: 0 0 5px 0;
-      color: #314047;
+      color: #41515a;
       font-size: 10px;
     }
 
-    .contact-line strong {
-      color: #1d2a32;
+    .meta-line strong {
+      color: #233238;
     }
 
     .title-block {
       margin: 0 0 16px 0;
       padding: 14px 0 0 0;
-      border-top: 1px solid #b9c4cc;
+      border-top: 1px solid #bcc7cd;
       text-align: center;
     }
 
-    .report-title {
+    .title {
       margin: 0;
+      color: #28463f;
       font-size: 25px;
       font-weight: bold;
-      color: #274840;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.7px;
     }
 
-    .divider-table {
+    .divider {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
     }
 
-    .divider-table td {
+    .divider td {
       border: none;
-      vertical-align: middle;
       padding: 0;
+      vertical-align: middle;
     }
 
     .divider-line {
       height: 1px;
-      background: #b9c4cc;
+      background: #bcc7cd;
     }
 
     .divider-chip {
-      width: 86px;
+      width: 84px;
       height: 5px;
-      background: #274840;
+      background: #28463f;
     }
 
-    .info-box {
-      margin-bottom: 14px;
+    .info-card {
+      margin-bottom: 16px;
       padding: 12px 14px;
-      border: 1px solid #dfe6eb;
-      border-top: 3px solid #274840;
-      background: #f7f9f8;
+      border: 1px solid #dee6ea;
+      background: #f8faf9;
     }
 
     .info-table {
@@ -190,114 +192,126 @@
     .info-table td {
       width: 50%;
       border: none;
-      vertical-align: top;
       padding: 0 10px 0 0;
+      vertical-align: top;
     }
 
     .info-table td.right {
-      padding: 0 0 0 10px;
-      border-left: 1px solid #cfd8de;
+      padding: 0 0 0 12px;
+      border-left: 1px solid #d0d9dd;
     }
 
     .info-line {
       margin: 0 0 9px 0;
+      color: #40515a;
       font-size: 11px;
-      color: #2f3d44;
     }
 
     .info-line strong {
-      color: #1d2a32;
+      color: #233238;
+    }
+
+    .table-wrap {
+      border: 1px solid #dbe3e8;
+      margin-bottom: 16px;
+    }
+
+    .table-title {
+      padding: 10px 12px;
+      background: #28463f;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
     }
 
     .main-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
     }
 
     .main-table th,
     .main-table td {
-      border: 1px solid #dce4ea;
+      border: 1px solid #dbe3e8;
       padding: 8px 9px;
       text-align: left;
       vertical-align: top;
     }
 
     .main-table th {
-      background: #274840;
+      background: #334f48;
       color: #ffffff;
       font-size: 10px;
       font-weight: bold;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.35px;
     }
 
     .main-table td {
-      color: #25333a;
       background: #ffffff;
+      color: #27353c;
     }
 
     .main-table tbody tr:nth-child(even) td {
       background: #f8fbfa;
     }
 
-    .summary-box {
-      width: 48%;
+    .summary-card {
+      width: 47%;
       margin-left: auto;
-      border: 1px solid #dfe6eb;
-      border-top: 3px solid #274840;
-      background: #f7f9f8;
       padding: 12px 14px;
+      border: 1px solid #dce4e8;
+      background: #f8faf9;
     }
 
     .summary-title {
       margin: 0 0 8px 0;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #cfd8de;
+      padding-bottom: 7px;
+      border-bottom: 1px solid #d0d9dd;
+      color: #28463f;
       font-size: 12px;
       font-weight: bold;
-      color: #274840;
     }
 
     .summary-line {
       margin: 0 0 10px 0;
-      color: #2f3d44;
+      color: #40515a;
       font-size: 11px;
     }
 
-    .summary-line strong {
+    .summary-value {
       float: right;
-      color: #1d2a32;
+      color: #233238;
       font-size: 12px;
+      font-weight: bold;
     }
 
     .footer {
       margin-top: 18px;
-      padding-top: 12px;
-      border-top: 1px solid #b9c4cc;
+      padding-top: 10px;
+      border-top: 1px solid #bcc7cd;
       text-align: center;
-      color: #54636d;
+      color: #5e6d76;
       font-size: 10px;
     }
 
     .empty {
-      padding: 18px 10px;
+      padding: 18px 12px;
       text-align: center;
-      color: #6b7a84;
-      border: 1px solid #dce4ea;
+      color: #6e7d86;
+      border: 1px solid #dbe3e8;
       background: #fafcfd;
     }
   </style>
 </head>
 <body>
   <div class="sheet">
-    <div class="top-accent"></div>
+    <div class="frame-top"></div>
 
-    <table class="header-table">
+    <table class="header">
       <tr>
-        <td class="brand-cell">
+        <td class="brand">
           <table class="brand-table">
             <tr>
-              <td class="logo-wrap">
+              <td class="logo-cell">
                 <div class="logo-box">
                   {% if empresa_logo %}
                   <img src="{{ empresa_logo }}" alt="Logo">
@@ -307,25 +321,19 @@
                 </div>
               </td>
               <td>
-                <p class="brand-name">{{ empresa_nombre.split(' ')[0] if empresa_nombre else 'Dotaciones' }}</p>
-                <p class="brand-name secondary">
-                  {% if empresa_nombre and ' ' in empresa_nombre %}
-                    {{ empresa_nombre.split(' ', 1)[1] }}
-                  {% else %}
-                    Zambrano
-                  {% endif %}
-                </p>
-                <p class="brand-caption">Sistema de inventario y reportes</p>
+                <p class="brand-kicker">Sistema de inventario</p>
+                <p class="brand-name">{{ empresa_nombre or 'Dotaciones Zambrano' }}</p>
+                <p class="brand-subtitle">Reporte consolidado del inventario general</p>
               </td>
             </tr>
           </table>
         </td>
-        <td class="contact-cell">
-          <div class="contact-box">
-            <p class="contact-line"><strong>Telefono:</strong> {{ empresa_celular }}</p>
-            <p class="contact-line"><strong>Direccion:</strong> {{ empresa_direccion }}</p>
+        <td class="meta">
+          <div class="meta-box">
+            <p class="meta-line"><strong>Telefono:</strong> {{ empresa_celular }}</p>
+            <p class="meta-line"><strong>Direccion:</strong> {{ empresa_direccion }}</p>
             {% if empresa_email %}
-            <p class="contact-line"><strong>Email:</strong> {{ empresa_email }}</p>
+            <p class="meta-line"><strong>Email:</strong> {{ empresa_email }}</p>
             {% endif %}
           </div>
         </td>
@@ -333,17 +341,17 @@
     </table>
 
     <div class="title-block">
-      <p class="report-title">Reporte de Resumen General</p>
-      <table class="divider-table">
+      <p class="title">Reporte de Resumen General</p>
+      <table class="divider">
         <tr>
           <td><div class="divider-line"></div></td>
-          <td style="width: 90px; text-align: center;"><div class="divider-chip"></div></td>
+          <td style="width: 92px; text-align: center;"><div class="divider-chip"></div></td>
           <td><div class="divider-line"></div></td>
         </tr>
       </table>
     </div>
 
-    <div class="info-box">
+    <div class="info-card">
       <table class="info-table">
         <tr>
           <td>
@@ -361,40 +369,43 @@
     </div>
 
     {% if filas %}
-    <table class="main-table">
-      <thead>
-        <tr>
-          {% for columna in columnas %}
-          <th>{{ columna }}</th>
+    <div class="table-wrap">
+      <div class="table-title">Detalle del resumen</div>
+      <table class="main-table">
+        <thead>
+          <tr>
+            {% for columna in columnas %}
+            <th>{{ columna }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in filas %}
+          <tr>
+            {% for columna in columnas %}
+            <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
+            {% endfor %}
+          </tr>
           {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for fila in filas %}
-        <tr>
-          {% for columna in columnas %}
-          <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+    </div>
 
-    <div class="summary-box">
+    <div class="summary-card">
       <p class="summary-title">Resumen del inventario</p>
-      <p class="summary-line">Total registros: <strong>{{ total_registros }}</strong></p>
-      <p class="summary-line">Cantidad total: <strong>{{ cantidad_total }}</strong></p>
-      <p class="summary-line">Valor total inventario: <strong>{{ valor_total }}</strong></p>
+      <p class="summary-line">Total registros <span class="summary-value">{{ total_registros }}</span></p>
+      <p class="summary-line">Cantidad total <span class="summary-value">{{ cantidad_total }}</span></p>
+      <p class="summary-line">Valor total inventario <span class="summary-value">{{ valor_total }}</span></p>
     </div>
     {% else %}
     <div class="empty">No hay datos para este resumen.</div>
     {% endif %}
 
     <div class="footer">
-      Dotaciones Zambrano &copy; 2026 | Sistema de Inventario
+      {{ empresa_nombre or 'Dotaciones Zambrano' }} &copy; 2026 | Sistema de Inventario
     </div>
 
-    <div class="bottom-accent"></div>
+    <div class="frame-bottom"></div>
   </div>
 </body>
 </html>
