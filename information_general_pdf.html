@@ -12,7 +12,7 @@
     body {
       margin: 0;
       padding: 0;
-      background: #eef3f8;
+      background: #eaf1f7;
       color: #162033;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 11px;
@@ -21,19 +21,26 @@
 
     .report {
       width: 100%;
+      padding: 12px;
+      border: 1px solid #d6e2ee;
+      background: #ffffff;
     }
 
     .accent-line {
-      height: 6px;
-      margin-bottom: 10px;
-      background: #0f9bd7;
+      height: 8px;
+      margin: -12px -12px 12px -12px;
+      background: #10263e;
     }
 
     .card {
       margin-bottom: 12px;
-      padding: 12px 14px;
-      border: 1px solid #d5dde8;
+      padding: 14px 16px;
+      border: 1px solid #dce5ef;
       background: #ffffff;
+    }
+
+    .header-card {
+      background: #f7fbff;
     }
 
     .header-table {
@@ -56,8 +63,8 @@
     .logo-box {
       width: 76px;
       height: 76px;
-      border: 1px solid #d5dde8;
-      background: #f7fafc;
+      border: 1px solid #bfd2e4;
+      background: #ffffff;
       text-align: center;
       vertical-align: middle;
     }
@@ -76,24 +83,25 @@
 
     .report-title {
       margin: 0 0 4px 0;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: bold;
-      letter-spacing: 1px;
+      letter-spacing: 1.4px;
       text-transform: uppercase;
-      color: #0f9bd7;
+      color: #0f7db0;
     }
 
     .company-row {
-      margin: 0 0 4px 0;
-      padding-bottom: 6px;
-      border-bottom: 1px solid #e6edf5;
+      margin: 0 0 6px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d9e6f1;
     }
 
     .company-row strong {
       display: block;
       margin-bottom: 2px;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: bold;
+      color: #10263e;
     }
 
     .company-name {
@@ -102,7 +110,7 @@
     }
 
     .meta-line {
-      margin: 0 0 3px 0;
+      margin: 0 0 4px 0;
       color: #5d6c80;
     }
 
@@ -112,12 +120,14 @@
 
     .filters-box {
       margin-bottom: 0;
+      background: #fbfdff;
     }
 
     .filters-title {
       margin: 0 0 8px 0;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
+      color: #10263e;
     }
 
     .filters-table {
@@ -139,8 +149,9 @@
 
     .filter-box {
       padding: 8px 10px;
-      border: 1px solid #dbe4ee;
-      background: #f8fafc;
+      border: 1px solid #dfe7f0;
+      border-left: 3px solid #0f9bd7;
+      background: #ffffff;
     }
 
     .filter-label {
@@ -183,9 +194,23 @@
       background: #ffffff;
     }
 
+    .total-primary .total-box {
+      border-color: #c6deee;
+      background: #edf8ff;
+    }
+
+    .total-secondary .total-box {
+      border-color: #10263e;
+      background: #10263e;
+    }
+
     .total-bar {
       height: 4px;
       background: #0f9bd7;
+    }
+
+    .total-secondary .total-bar {
+      background: #3ab6ef;
     }
 
     .total-content {
@@ -202,10 +227,18 @@
       color: #7b8a9d;
     }
 
+    .total-secondary .total-label {
+      color: #b9cde0;
+    }
+
     .total-value {
       font-size: 24px;
       font-weight: bold;
       color: #162033;
+    }
+
+    .total-secondary .total-value {
+      color: #ffffff;
     }
 
     .table-card {
@@ -214,21 +247,22 @@
     }
 
     .table-header {
-      padding: 10px 12px;
-      border-bottom: 1px solid #dbe4ee;
-      background: #f8fafc;
+      padding: 11px 12px;
+      border-bottom: 1px solid #10263e;
+      background: #10263e;
     }
 
     .table-title {
       margin: 0 0 2px 0;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: bold;
+      color: #ffffff;
     }
 
     .table-subtitle {
       margin: 0;
       font-size: 10px;
-      color: #6b7a8d;
+      color: #bfd0e1;
     }
 
     table.report-table {
@@ -245,10 +279,14 @@
     }
 
     table.report-table th {
-      background: #edf4fa;
+      background: #e8f2fa;
       font-size: 10px;
       font-weight: bold;
-      color: #405065;
+      color: #314256;
+    }
+
+    table.report-table td {
+      color: #1f2937;
     }
 
     .empty {
@@ -262,7 +300,7 @@
   <div class="report">
     <div class="accent-line"></div>
 
-    <div class="card">
+    <div class="card header-card">
       <table class="header-table">
         <tr>
           <td class="logo-cell">
@@ -313,7 +351,7 @@
 
     <table class="totals-table">
       <tr>
-        <td>
+        <td class="total-primary">
           <div class="total-box">
             <div class="total-bar"></div>
             <div class="total-content">
@@ -322,7 +360,7 @@
             </div>
           </div>
         </td>
-        <td class="last">
+        <td class="last total-secondary">
           <div class="total-box">
             <div class="total-bar"></div>
             <div class="total-content">
