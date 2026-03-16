@@ -302,9 +302,156 @@
       border: 1px solid #dbe3e8;
       background: #fafcfd;
     }
+
+    body.mode-pdf {
+      font-size: 9px;
+      line-height: 1.2;
+    }
+
+    body.mode-pdf .sheet {
+      padding: 10px 12px 12px 12px;
+    }
+
+    body.mode-pdf .frame-top {
+      margin: -10px -12px 12px -12px;
+    }
+
+    body.mode-pdf .frame-bottom {
+      margin: 12px -12px -12px -12px;
+    }
+
+    body.mode-pdf .header {
+      margin-bottom: 10px;
+    }
+
+    body.mode-pdf .brand {
+      padding-right: 10px;
+    }
+
+    body.mode-pdf .logo-cell {
+      width: 90px;
+      padding-right: 10px;
+    }
+
+    body.mode-pdf .logo-box {
+      width: 72px;
+      height: 56px;
+    }
+
+    body.mode-pdf .logo-box img {
+      width: 72px;
+      max-height: 56px;
+    }
+
+    body.mode-pdf .brand-kicker {
+      font-size: 8px;
+      margin-bottom: 2px;
+    }
+
+    body.mode-pdf .brand-name {
+      font-size: 15px;
+    }
+
+    body.mode-pdf .brand-subtitle {
+      font-size: 8px;
+      margin-top: 3px;
+    }
+
+    body.mode-pdf .meta-box {
+      padding: 6px 8px;
+    }
+
+    body.mode-pdf .meta-line {
+      font-size: 8px;
+      margin-bottom: 3px;
+    }
+
+    body.mode-pdf .title-block {
+      margin-bottom: 10px;
+      padding-top: 8px;
+    }
+
+    body.mode-pdf .title {
+      font-size: 18px;
+    }
+
+    body.mode-pdf .divider {
+      margin-top: 6px;
+    }
+
+    body.mode-pdf .divider-chip {
+      width: 56px;
+      height: 4px;
+    }
+
+    body.mode-pdf .info-card {
+      margin-bottom: 10px;
+      padding: 8px 10px;
+    }
+
+    body.mode-pdf .info-table td {
+      padding-right: 8px;
+    }
+
+    body.mode-pdf .info-table td.right {
+      padding-left: 8px;
+    }
+
+    body.mode-pdf .info-line {
+      font-size: 8px;
+      margin-bottom: 5px;
+    }
+
+    body.mode-pdf .table-wrap {
+      margin-bottom: 10px;
+    }
+
+    body.mode-pdf .table-title {
+      padding: 6px 8px;
+      font-size: 9px;
+    }
+
+    body.mode-pdf .main-table th,
+    body.mode-pdf .main-table td {
+      padding: 3px 5px;
+    }
+
+    body.mode-pdf .main-table th {
+      font-size: 7px;
+    }
+
+    body.mode-pdf .main-table td {
+      font-size: 7px;
+    }
+
+    body.mode-pdf .summary-card {
+      width: 44%;
+      padding: 8px 10px;
+    }
+
+    body.mode-pdf .summary-title {
+      font-size: 9px;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+    }
+
+    body.mode-pdf .summary-line {
+      font-size: 8px;
+      margin-bottom: 6px;
+    }
+
+    body.mode-pdf .summary-value {
+      font-size: 9px;
+    }
+
+    body.mode-pdf .footer {
+      margin-top: 10px;
+      padding-top: 6px;
+      font-size: 7px;
+    }
   </style>
 </head>
-<body>
+<body class="mode-{{ render_mode or 'html' }}">
   <div class="sheet">
     <div class="frame-top"></div>
 

@@ -1162,10 +1162,10 @@ def load_report_template():
 @app.route("/InformationGeneralPdf", methods=["GET"])
 def reporte_general_pdf():
     try:
-        context = build_reporte_pdf_context()
-        html = render_template_string(load_report_template(), **context)
-
         output_format = request.args.get("format", "pdf").strip().lower()
+        context = build_reporte_pdf_context()
+        context["render_mode"] = output_format
+        html = render_template_string(load_report_template(), **context)
 
         if output_format == "html":
             return html
