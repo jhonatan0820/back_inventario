@@ -6,398 +6,355 @@
   <style>
     @page {
       size: A4;
-      margin: 16mm 12mm;
+      margin: 14mm 12mm 16mm 12mm;
     }
 
     body {
       margin: 0;
       padding: 0;
-      background: #eaf1f7;
-      color: #162033;
+      background: #edf2f5;
+      color: #1d2a32;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 11px;
-      line-height: 1.4;
+      line-height: 1.35;
     }
 
-    .report {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #d6e2ee;
+    .sheet {
+      padding: 14px 16px 18px 16px;
+      border: 1px solid #d9e2e8;
       background: #ffffff;
     }
 
-    .accent-line {
-      height: 8px;
-      margin: -12px -12px 12px -12px;
-      background: #10263e;
+    .top-accent,
+    .bottom-accent {
+      height: 7px;
+      background: #274840;
     }
 
-    .card {
-      margin-bottom: 12px;
-      padding: 14px 16px;
-      border: 1px solid #dce5ef;
-      background: #ffffff;
+    .top-accent {
+      margin: -14px -16px 16px -16px;
     }
 
-    .header-card {
-      background: #f7fbff;
+    .bottom-accent {
+      margin: 18px -16px -18px -16px;
     }
 
     .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 0;
+      margin-bottom: 14px;
     }
 
     .header-table td {
+      border: none;
       vertical-align: top;
       padding: 0;
-      border: none;
     }
 
-    .logo-cell {
-      width: 92px;
+    .brand-cell {
+      width: 54%;
       padding-right: 16px;
     }
 
+    .contact-cell {
+      width: 46%;
+      text-align: right;
+    }
+
+    .brand-table {
+      border-collapse: collapse;
+    }
+
+    .brand-table td {
+      border: none;
+      vertical-align: middle;
+      padding: 0;
+    }
+
+    .logo-wrap {
+      width: 102px;
+      padding-right: 14px;
+    }
+
     .logo-box {
-      width: 76px;
-      height: 76px;
-      border: 1px solid #bfd2e4;
-      background: #ffffff;
+      width: 96px;
+      height: 72px;
       text-align: center;
       vertical-align: middle;
-    }
-
-    .logo-box img {
-      width: 76px;
-      height: auto;
-      max-height: 76px;
-    }
-
-    .logo-fallback {
-      font-size: 11px;
-      color: #64748b;
-      padding-top: 30px;
-    }
-
-    .report-title {
-      margin: 0 0 4px 0;
-      font-size: 10px;
-      font-weight: bold;
-      letter-spacing: 1.4px;
-      text-transform: uppercase;
-      color: #0f7db0;
-    }
-
-    .company-row {
-      margin: 0 0 6px 0;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #d9e6f1;
-    }
-
-    .company-row strong {
-      display: block;
-      margin-bottom: 2px;
-      font-size: 24px;
-      font-weight: bold;
-      color: #10263e;
-    }
-
-    .company-name {
-      font-size: 12px;
-      color: #5d6c80;
-    }
-
-    .meta-line {
-      margin: 0 0 4px 0;
-      color: #5d6c80;
-    }
-
-    .meta-line strong {
-      color: #162033;
-    }
-
-    .filters-box {
-      margin-bottom: 0;
-      background: #fbfdff;
-    }
-
-    .filters-title {
-      margin: 0 0 8px 0;
-      font-size: 13px;
-      font-weight: bold;
-      color: #10263e;
-    }
-
-    .filters-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-    }
-
-    .filters-table td {
-      width: 50%;
-      padding: 0 6px 8px 0;
-      border: none;
-      vertical-align: top;
-    }
-
-    .filters-table td.right {
-      padding: 0 0 8px 6px;
-    }
-
-    .filter-box {
-      padding: 8px 10px;
-      border: 1px solid #dfe7f0;
-      border-left: 3px solid #0f9bd7;
-      background: #ffffff;
-    }
-
-    .filter-label {
-      margin: 0 0 3px 0;
-      font-size: 9px;
-      font-weight: bold;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-      color: #7b8a9d;
-    }
-
-    .filter-value {
-      margin: 0;
-      font-size: 12px;
-      font-weight: bold;
-      color: #162033;
-    }
-
-    .totals-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0;
-      margin-bottom: 12px;
-    }
-
-    .totals-table td {
-      width: 50%;
-      padding: 0 5px 0 0;
-      border: none;
-      vertical-align: top;
-    }
-
-    .totals-table td.last {
-      padding: 0 0 0 5px;
-    }
-
-    .total-box {
-      padding: 0;
-      border: 1px solid #d5dde8;
-      background: #ffffff;
-    }
-
-    .total-primary .total-box {
-      border-color: #c6deee;
-      background: #edf8ff;
-    }
-
-    .total-secondary .total-box {
-      border-color: #10263e;
-      background: #10263e;
-    }
-
-    .total-bar {
-      height: 4px;
-      background: #0f9bd7;
-    }
-
-    .total-secondary .total-bar {
-      background: #3ab6ef;
-    }
-
-    .total-content {
-      padding: 10px 12px 12px 12px;
-    }
-
-    .total-label {
-      display: block;
-      margin-bottom: 5px;
-      font-size: 10px;
-      font-weight: bold;
-      text-transform: uppercase;
-      letter-spacing: 0.7px;
-      color: #7b8a9d;
-    }
-
-    .total-secondary .total-label {
-      color: #b9cde0;
-    }
-
-    .total-value {
-      font-size: 24px;
-      font-weight: bold;
-      color: #162033;
-    }
-
-    .total-secondary .total-value {
-      color: #ffffff;
-    }
-
-    .table-card {
-      padding: 0;
       overflow: hidden;
     }
 
-    .table-header {
-      padding: 11px 12px;
-      border-bottom: 1px solid #10263e;
-      background: #10263e;
+    .logo-box img {
+      width: 96px;
+      height: auto;
+      max-height: 72px;
     }
 
-    .table-title {
-      margin: 0 0 2px 0;
-      font-size: 13px;
-      font-weight: bold;
-      color: #ffffff;
+    .logo-fallback {
+      font-size: 12px;
+      color: #75838f;
+      padding-top: 28px;
     }
 
-    .table-subtitle {
+    .brand-name {
       margin: 0;
-      font-size: 10px;
-      color: #bfd0e1;
+      font-size: 16px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      color: #243b36;
+      text-transform: uppercase;
     }
 
-    table.report-table {
+    .brand-name.secondary {
+      margin-top: 2px;
+      font-size: 18px;
+    }
+
+    .contact-line {
+      margin: 0 0 4px 0;
+      color: #314047;
+      font-size: 10px;
+    }
+
+    .contact-line strong {
+      color: #1d2a32;
+    }
+
+    .title-block {
+      margin: 6px 0 14px 0;
+      padding: 14px 0 0 0;
+      border-top: 1px solid #b9c4cc;
+      text-align: center;
+    }
+
+    .report-title {
+      margin: 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #274840;
+      text-transform: uppercase;
+    }
+
+    .divider-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .divider-table td {
+      border: none;
+      vertical-align: middle;
+      padding: 0;
+    }
+
+    .divider-line {
+      height: 1px;
+      background: #b9c4cc;
+    }
+
+    .divider-chip {
+      width: 86px;
+      height: 5px;
+      background: #274840;
+    }
+
+    .info-box {
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border: 1px solid #e2e8ed;
+      background: #f7f9f8;
+    }
+
+    .info-table {
       width: 100%;
       border-collapse: collapse;
     }
 
-    table.report-table th,
-    table.report-table td {
-      border: 1px solid #dbe4ee;
-      padding: 7px 9px;
+    .info-table td {
+      width: 50%;
+      border: none;
+      vertical-align: top;
+      padding: 0 10px 0 0;
+    }
+
+    .info-table td.right {
+      padding: 0 0 0 10px;
+      border-left: 1px solid #cfd8de;
+    }
+
+    .info-line {
+      margin: 0 0 8px 0;
+      font-size: 11px;
+      color: #2f3d44;
+    }
+
+    .info-line strong {
+      color: #1d2a32;
+    }
+
+    .main-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 14px;
+    }
+
+    .main-table th,
+    .main-table td {
+      border: 1px solid #dce4ea;
+      padding: 8px 9px;
       text-align: left;
       vertical-align: top;
     }
 
-    table.report-table th {
-      background: #e8f2fa;
+    .main-table th {
+      background: #274840;
+      color: #ffffff;
       font-size: 10px;
       font-weight: bold;
-      color: #314256;
     }
 
-    table.report-table td {
-      color: #1f2937;
+    .main-table td {
+      color: #25333a;
+      background: #ffffff;
+    }
+
+    .summary-box {
+      width: 44%;
+      margin-left: auto;
+      border: 1px solid #dfe6eb;
+      background: #f7f9f8;
+      padding: 10px 12px;
+    }
+
+    .summary-title {
+      margin: 0 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #cfd8de;
+      font-size: 12px;
+      font-weight: bold;
+      color: #274840;
+    }
+
+    .summary-line {
+      margin: 0 0 8px 0;
+      color: #2f3d44;
+      font-size: 11px;
+    }
+
+    .summary-line strong {
+      float: right;
+      color: #1d2a32;
+      font-size: 12px;
+    }
+
+    .footer {
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid #b9c4cc;
+      text-align: center;
+      color: #54636d;
+      font-size: 10px;
     }
 
     .empty {
-      padding: 18px 12px;
+      padding: 18px 10px;
       text-align: center;
-      color: #64748b;
+      color: #6b7a84;
+      border: 1px solid #dce4ea;
+      background: #fafcfd;
     }
   </style>
 </head>
 <body>
-  <div class="report">
-    <div class="accent-line"></div>
+  <div class="sheet">
+    <div class="top-accent"></div>
 
-    <div class="card header-card">
-      <table class="header-table">
-        <tr>
-          <td class="logo-cell">
-            <div class="logo-box">
-              <img src="Logo.jpg" alt="Logo">
-            </div>
-          </td>
-          <td>
-            <p class="report-title">Resumen general</p>
-            <p class="company-row">
-              <strong>Dotaciones Zambrano</strong>
-              <span class="company-name">Reporte consolidado de inventario</span>
-            </p>
-            <p class="meta-line"><strong>Direccion:</strong> Calle 70 sur # 91-40 </p>
-            <p class="meta-line"><strong>Celular:</strong> 313663168 </p>
-            <p class="meta-line"><strong>Fecha:</strong> {{ fecha_generacion or 'Sin fecha' }}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    <div class="card filters-box">
-      <p class="filters-title">Filtros aplicados</p>
-      <table class="filters-table">
-        {% for label, value in filtros.items() %}
-        {% if loop.index0 is divisibleby 2 %}
-        <tr>
-        {% endif %}
-          <td{% if loop.index0 is odd %} class="right"{% endif %}>
-            <div class="filter-box">
-              <p class="filter-label">{{ label }}</p>
-              <p class="filter-value">{{ value or 'Todos' }}</p>
-            </div>
-          </td>
-        {% if loop.index0 is odd or loop.last %}
-          {% if loop.index0 is even %}
-          <td class="right"></td>
-          {% endif %}
-        </tr>
-        {% endif %}
-        {% endfor %}
-      </table>
-    </div>
-
-    <table class="totals-table">
+    <table class="header-table">
       <tr>
-        <td class="total-primary">
-          <div class="total-box">
-            <div class="total-bar"></div>
-            <div class="total-content">
-              <span class="total-label">Cantidad total</span>
-              <span class="total-value">{{ cantidad_total or 0 }}</span>
-            </div>
-          </div>
+        <td class="brand-cell">
+          <table class="brand-table">
+            <tr>
+              <td class="logo-wrap">
+                <div class="logo-box">
+                  <img src="./img/Logo.jpg" alt="Logo">
+                </div>
+              </td>
+              <td>
+                <p class="brand-name">Dotaciones</p>
+                <p class="brand-name secondary">Zambrano</p>
+              </td>
+            </tr>
+          </table>
         </td>
-        <td class="last total-secondary">
-          <div class="total-box">
-            <div class="total-bar"></div>
-            <div class="total-content">
-              <span class="total-label">Valor total</span>
-              <span class="total-value">{{ valor_total or '$ 0' }}</span>
-            </div>
-          </div>
+        <td class="contact-cell">
+          <p class="contact-line"><strong>Telefono:</strong>3136673447</p>
+          <p class="contact-line"><strong>Direccion:</strong>calle 70 sur # 91-40 </p>
         </td>
       </tr>
     </table>
 
-    {% if filas %}
-    <div class="card table-card">
-      <div class="table-header">
-        <p class="table-title">Detalle del resumen</p>
-        <p class="table-subtitle">{{ filas|length }} registros generados</p>
-      </div>
-      <table class="report-table">
-        <thead>
-          <tr>
-            {% for columna in columnas %}
-            <th>{{ columna }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for fila in filas %}
-          <tr>
-            {% for columna in columnas %}
-            <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
+    <div class="title-block">
+      <p class="report-title">Reporte de Resumen General</p>
+      <table class="divider-table">
+        <tr>
+          <td><div class="divider-line"></div></td>
+          <td style="width: 90px; text-align: center;"><div class="divider-chip"></div></td>
+          <td><div class="divider-line"></div></td>
+        </tr>
       </table>
     </div>
-    {% else %}
-    <div class="card">
-      <div class="empty">No hay datos para este resumen.</div>
+
+    <div class="info-box">
+      <table class="info-table">
+        <tr>
+          <td>
+            <p class="info-line"><strong>Fecha del reporte:</strong> {{ fecha_generacion }}</p>
+            <p class="info-line"><strong>Categoria:</strong> {{ filtros['Categoria'] }}</p>
+            <p class="info-line"><strong>Producto:</strong> {{ filtros['Producto'] }}</p>
+          </td>
+          <td class="right">
+            <p class="info-line"><strong>Tipo de reporte:</strong> {{ tipo_reporte }}</p>
+            <p class="info-line"><strong>Genero / Talla:</strong> {{ filtros['Genero'] }} / {{ filtros['Talla'] }}</p>
+          </td>
+        </tr>
+      </table>
     </div>
+
+    {% if filas %}
+    <table class="main-table">
+      <thead>
+        <tr>
+          {% for columna in columnas %}
+          <th>{{ columna }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          {% for columna in columnas %}
+          <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="summary-box">
+      <p class="summary-title">Resumen del inventario</p>
+      <p class="summary-line">Total registros: <strong>{{ total_registros }}</strong></p>
+      <p class="summary-line">Cantidad total: <strong>{{ cantidad_total }}</strong></p>
+      <p class="summary-line">Valor total inventario: <strong>{{ valor_total }}</strong></p>
+    </div>
+    {% else %}
+    <div class="empty">No hay datos para este resumen.</div>
     {% endif %}
+
+    <div class="footer">
+      Dotaciones Zambrano &copy; 2026 | Sistema de Inventario
+    </div>
+
+    <div class="bottom-accent"></div>
   </div>
 </body>
 </html>

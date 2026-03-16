@@ -1116,10 +1116,12 @@ def build_reporte_pdf_context():
     }
 
     return {
+        "tipo_reporte": "Resumen general",
         "fecha_generacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "filtros": filtros,
         "columnas": data["columns"],
         "filas": data["rows"],
+        "total_registros": len(data["rows"]),
         "cantidad_total": totals["cantidad_total"],
         "valor_total": totals["valor_total"]
     }
