@@ -1116,6 +1116,12 @@ def build_reporte_pdf_context():
     }
 
     return {
+        "empresa_nombre": os.environ.get("REPORT_COMPANY_NAME", "Dotaciones Zambrano"),
+        "empresa_logo": os.environ.get("REPORT_COMPANY_LOGO", ""),
+        "empresa_direccion": os.environ.get("REPORT_COMPANY_ADDRESS", "Calle 70 sur # 91-40"),
+        "empresa_celular": os.environ.get("REPORT_COMPANY_PHONE", "3136673447"),
+        "empresa_email": os.environ.get("REPORT_COMPANY_EMAIL", ""),
+        "responsable": os.environ.get("REPORT_DEFAULT_RESPONSABLE", "Administrador"),
         "tipo_reporte": "Resumen general",
         "fecha_generacion": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "filtros": filtros,

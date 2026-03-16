@@ -42,7 +42,7 @@
     .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .header-table td {
@@ -98,20 +98,35 @@
 
     .brand-name {
       margin: 0;
-      font-size: 16px;
+      font-size: 13px;
       font-weight: bold;
-      letter-spacing: 1px;
+      letter-spacing: 1.4px;
       color: #243b36;
       text-transform: uppercase;
     }
 
     .brand-name.secondary {
       margin-top: 2px;
-      font-size: 18px;
+      font-size: 22px;
+      letter-spacing: 0.8px;
+    }
+
+    .brand-caption {
+      margin: 6px 0 0 0;
+      font-size: 10px;
+      color: #6b7a84;
+    }
+
+    .contact-box {
+      display: inline-block;
+      padding: 8px 10px;
+      border: 1px solid #dbe4ea;
+      background: #f7faf8;
+      text-align: right;
     }
 
     .contact-line {
-      margin: 0 0 4px 0;
+      margin: 0 0 5px 0;
       color: #314047;
       font-size: 10px;
     }
@@ -121,7 +136,7 @@
     }
 
     .title-block {
-      margin: 6px 0 14px 0;
+      margin: 0 0 16px 0;
       padding: 14px 0 0 0;
       border-top: 1px solid #b9c4cc;
       text-align: center;
@@ -129,10 +144,11 @@
 
     .report-title {
       margin: 0;
-      font-size: 24px;
+      font-size: 25px;
       font-weight: bold;
       color: #274840;
       text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
 
     .divider-table {
@@ -160,8 +176,9 @@
 
     .info-box {
       margin-bottom: 14px;
-      padding: 10px 12px;
-      border: 1px solid #e2e8ed;
+      padding: 12px 14px;
+      border: 1px solid #dfe6eb;
+      border-top: 3px solid #274840;
       background: #f7f9f8;
     }
 
@@ -183,7 +200,7 @@
     }
 
     .info-line {
-      margin: 0 0 8px 0;
+      margin: 0 0 9px 0;
       font-size: 11px;
       color: #2f3d44;
     }
@@ -211,6 +228,7 @@
       color: #ffffff;
       font-size: 10px;
       font-weight: bold;
+      letter-spacing: 0.4px;
     }
 
     .main-table td {
@@ -218,12 +236,17 @@
       background: #ffffff;
     }
 
+    .main-table tbody tr:nth-child(even) td {
+      background: #f8fbfa;
+    }
+
     .summary-box {
-      width: 44%;
+      width: 48%;
       margin-left: auto;
       border: 1px solid #dfe6eb;
+      border-top: 3px solid #274840;
       background: #f7f9f8;
-      padding: 10px 12px;
+      padding: 12px 14px;
     }
 
     .summary-title {
@@ -236,7 +259,7 @@
     }
 
     .summary-line {
-      margin: 0 0 8px 0;
+      margin: 0 0 10px 0;
       color: #2f3d44;
       font-size: 11px;
     }
@@ -248,8 +271,8 @@
     }
 
     .footer {
-      margin-top: 16px;
-      padding-top: 10px;
+      margin-top: 18px;
+      padding-top: 12px;
       border-top: 1px solid #b9c4cc;
       text-align: center;
       color: #54636d;
@@ -276,19 +299,35 @@
             <tr>
               <td class="logo-wrap">
                 <div class="logo-box">
-                  <img src="./img/Logo.jpg" alt="Logo">
+                  {% if empresa_logo %}
+                  <img src="{{ empresa_logo }}" alt="Logo">
+                  {% else %}
+                  <div class="logo-fallback">LOGO</div>
+                  {% endif %}
                 </div>
               </td>
               <td>
-                <p class="brand-name">Dotaciones</p>
-                <p class="brand-name secondary">Zambrano</p>
+                <p class="brand-name">{{ empresa_nombre.split(' ')[0] if empresa_nombre else 'Dotaciones' }}</p>
+                <p class="brand-name secondary">
+                  {% if empresa_nombre and ' ' in empresa_nombre %}
+                    {{ empresa_nombre.split(' ', 1)[1] }}
+                  {% else %}
+                    Zambrano
+                  {% endif %}
+                </p>
+                <p class="brand-caption">Sistema de inventario y reportes</p>
               </td>
             </tr>
           </table>
         </td>
         <td class="contact-cell">
-          <p class="contact-line"><strong>Telefono:</strong>3136673447</p>
-          <p class="contact-line"><strong>Direccion:</strong>calle 70 sur # 91-40 </p>
+          <div class="contact-box">
+            <p class="contact-line"><strong>Telefono:</strong> {{ empresa_celular }}</p>
+            <p class="contact-line"><strong>Direccion:</strong> {{ empresa_direccion }}</p>
+            {% if empresa_email %}
+            <p class="contact-line"><strong>Email:</strong> {{ empresa_email }}</p>
+            {% endif %}
+          </div>
         </td>
       </tr>
     </table>
@@ -313,6 +352,7 @@
             <p class="info-line"><strong>Producto:</strong> {{ filtros['Producto'] }}</p>
           </td>
           <td class="right">
+            <p class="info-line"><strong>Responsable:</strong> {{ responsable }}</p>
             <p class="info-line"><strong>Tipo de reporte:</strong> {{ tipo_reporte }}</p>
             <p class="info-line"><strong>Genero / Talla:</strong> {{ filtros['Genero'] }} / {{ filtros['Talla'] }}</p>
           </td>
