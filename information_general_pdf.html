@@ -6,13 +6,17 @@
   <style>
     @page {
       size: A4;
-      margin: 8mm 8mm 10mm 8mm;
+      margin: 10mm 10mm 12mm 10mm;
+    }
+
+    * {
+      box-sizing: border-box;
     }
 
     body {
       margin: 0;
       padding: 0;
-      background: #edf1f4;
+      background: #ffffff;
       color: #24343a;
       font-family: Arial, Helvetica, sans-serif;
       font-size: 10px;
@@ -20,87 +24,65 @@
     }
 
     .sheet {
-      border: 1px solid #d8e0e5;
       background: #ffffff;
-      padding: 14px 16px 16px 16px;
+      padding: 0;
     }
 
-    .frame-top,
+    /* ── Barras decorativas ── */
+    .frame-top {
+      background: #2b4a42;
+      height: 8px;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
     .frame-bottom {
       background: #2b4a42;
-      height: 6px;
+      height: 8px;
+      width: 100%;
+      margin-top: 12px;
     }
 
-    .frame-top {
-      margin: -14px -16px 14px -16px;
-    }
-
-    .frame-bottom {
-      margin: 14px -16px -16px -16px;
-    }
-
-    .header {
+    /* ── Header: tabla de una fila, dos celdas ── */
+    .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
 
-    .header td {
-      border: none;
-      padding: 0;
-      vertical-align: top;
-    }
-
-    .brand-cell {
-      width: 62%;
-      padding-right: 14px;
-    }
-
-    .meta-cell {
-      width: 38%;
-      text-align: right;
-    }
-
-    .brand-table {
-      border-collapse: collapse;
-    }
-
-    .brand-table td {
+    .header-table td {
       border: none;
       padding: 0;
       vertical-align: middle;
     }
 
-    .logo-cell {
-      width: 112px;
-      padding-right: 12px;
+    /* Celda izquierda: logo + nombre */
+    .header-left {
+      width: 60%;
+      padding-right: 10px;
     }
 
-    .logo-box {
-      width: 96px;
-      height: 70px;
-      overflow: hidden;
-      text-align: center;
+    /* Logo dentro de la celda izquierda */
+    .logo-wrap {
+      width: 80px;
       vertical-align: middle;
-      background: #ffffff;
+      padding-right: 10px;
     }
 
-    .logo-box img {
-      width: 96px;
+    .logo-wrap img {
+      width: 80px;
       height: auto;
-      max-height: 70px;
+      max-height: 60px;
     }
 
-    .logo-fallback {
-      color: #6f7d85;
-      padding-top: 28px;
-      font-size: 9px;
+    .brand-wrap {
+      vertical-align: middle;
     }
 
     .brand-kicker {
-      margin: 0 0 3px 0;
+      margin: 0 0 2px 0;
       color: #5f6c74;
-      font-size: 9px;
+      font-size: 8px;
       letter-spacing: 1px;
       text-transform: uppercase;
     }
@@ -108,79 +90,75 @@
     .brand-name {
       margin: 0;
       color: #203933;
-      font-size: 22px;
+      font-size: 18px;
       font-weight: bold;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
     }
 
     .brand-subtitle {
-      margin: 4px 0 0 0;
+      margin: 3px 0 0 0;
       color: #6d7b84;
-      font-size: 10px;
+      font-size: 9px;
+    }
+
+    /* Celda derecha: datos de contacto */
+    .header-right {
+      width: 40%;
+      text-align: right;
+      vertical-align: top;
     }
 
     .meta-box {
-      display: inline-block;
-      text-align: right;
-      background: #fafcfc;
       border: 1px solid #dce4e8;
-      padding: 8px 10px;
+      background: #fafcfc;
+      padding: 7px 9px;
+      text-align: right;
     }
 
     .meta-line {
       margin: 0 0 4px 0;
       color: #405159;
-      font-size: 10px;
+      font-size: 9px;
+    }
+
+    .meta-line:last-child {
+      margin-bottom: 0;
     }
 
     .meta-line strong {
       color: #223238;
     }
 
+    /* ── Título principal ── */
     .title-block {
       border-top: 1px solid #bdc8ce;
       text-align: center;
-      padding-top: 10px;
-      margin: 0 0 14px 0;
+      padding: 10px 0 8px 0;
+      margin-bottom: 12px;
     }
 
     .title {
-      margin: 0;
+      margin: 0 0 6px 0;
       color: #28463f;
-      font-size: 30px;
+      font-size: 22px;
       font-weight: bold;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.5px;
     }
 
-    .divider {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-    }
-
-    .divider td {
-      border: none;
-      padding: 0;
-      vertical-align: middle;
-    }
-
-    .divider-line {
-      height: 1px;
-      background: #bcc7cd;
-    }
-
-    .divider-chip {
-      width: 80px;
+    .title-chip {
+      width: 70px;
       height: 4px;
       background: #28463f;
+      margin: 0 auto;
     }
 
+    /* ── Tarjeta de información del reporte ── */
     .info-card {
       border: 1px solid #dce4e8;
       background: #f8faf9;
-      padding: 10px 12px;
+      padding: 9px 11px;
       margin-bottom: 12px;
     }
 
@@ -196,25 +174,30 @@
       vertical-align: top;
     }
 
-    .info-table td.right {
+    .info-col-left {
+      padding-right: 10px;
+    }
+
+    .info-col-right {
       border-left: 1px solid #d0d9de;
       padding-left: 10px;
     }
 
-    .info-table td.left {
-      padding-right: 10px;
+    .info-line {
+      margin: 0 0 6px 0;
+      color: #40515a;
+      font-size: 10px;
     }
 
-    .info-line {
-      margin: 0 0 7px 0;
-      color: #40515a;
-      font-size: 11px;
+    .info-line:last-child {
+      margin-bottom: 0;
     }
 
     .info-line strong {
       color: #233238;
     }
 
+    /* ── Tabla de datos ── */
     .table-wrap {
       border: 1px solid #dbe3e8;
       margin-bottom: 12px;
@@ -224,8 +207,8 @@
       background: #28463f;
       color: #ffffff;
       font-weight: bold;
-      padding: 8px 10px;
-      font-size: 12px;
+      padding: 7px 9px;
+      font-size: 11px;
     }
 
     .main-table {
@@ -239,14 +222,14 @@
       border: 1px solid #dbe3e8;
       text-align: left;
       vertical-align: top;
-      padding: 5px 7px;
+      padding: 5px 6px;
       word-wrap: break-word;
     }
 
     .main-table th {
       background: #35524a;
       color: #ffffff;
-      font-size: 10px;
+      font-size: 9px;
       font-weight: bold;
       letter-spacing: 0.2px;
     }
@@ -254,207 +237,235 @@
     .main-table td {
       background: #ffffff;
       color: #27353c;
-      font-size: 10px;
+      font-size: 9px;
     }
 
     .main-table tbody tr:nth-child(even) td {
-      background: #f8fbfa;
+      background: #f4f8f6;
     }
 
-    .summary-table {
+    /* ── Resumen final ── */
+    .summary-outer {
       width: 100%;
       border-collapse: collapse;
     }
 
-    .summary-table td {
+    .summary-outer td {
       border: none;
       padding: 0;
       vertical-align: top;
     }
 
-    .summary-card-cell {
+    .summary-spacer {
+      width: 52%;
+    }
+
+    .summary-card-wrap {
       width: 48%;
     }
 
     .summary-card {
       border: 1px solid #dce4e8;
       background: #f8faf9;
-      padding: 10px 12px;
+      padding: 9px 11px;
     }
 
     .summary-title {
-      margin: 0 0 8px 0;
+      margin: 0 0 7px 0;
       padding-bottom: 5px;
       border-bottom: 1px solid #d0d9dd;
       color: #28463f;
       font-weight: bold;
-      font-size: 12px;
-    }
-
-    .summary-line {
-      margin: 0 0 8px 0;
-      color: #40515a;
       font-size: 11px;
     }
 
-    .summary-value {
-      float: right;
-      color: #233238;
-      font-weight: bold;
-      font-size: 12px;
+    .summary-row {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 6px;
     }
 
-    .footer {
-      margin-top: 12px;
-      padding-top: 7px;
-      border-top: 1px solid #bcc7cd;
-      text-align: center;
-      color: #5d6d75;
+    .summary-row td {
+      border: none;
+      padding: 0;
+      vertical-align: middle;
+    }
+
+    .summary-label {
+      color: #40515a;
       font-size: 10px;
     }
 
+    .summary-value {
+      text-align: right;
+      color: #233238;
+      font-weight: bold;
+      font-size: 11px;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 10px;
+      padding-top: 6px;
+      border-top: 1px solid #bcc7cd;
+      text-align: center;
+      color: #5d6d75;
+      font-size: 9px;
+    }
+
+    /* ── Sin datos ── */
     .empty {
       border: 1px solid #dbe3e8;
       background: #fafcfd;
       color: #6f7e87;
       text-align: center;
       padding: 16px 10px;
+      font-size: 10px;
     }
-
   </style>
 </head>
-<body class="mode-{{ render_mode or 'html' }}">
-  <div class="sheet">
-    <div class="frame-top"></div>
+<body>
+<div class="sheet">
 
-    <table class="header">
+  <!-- Barra superior -->
+  <div class="frame-top"></div>
+
+  <!-- Header -->
+  <table class="header-table">
+    <tr>
+      <!-- Logo + Nombre empresa -->
+      <td class="header-left">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            {% if empresa_logo %}
+            <td class="logo-wrap">
+              <img src="{{ empresa_logo }}" alt="Logo">
+            </td>
+            {% endif %}
+            <td class="brand-wrap">
+              <p class="brand-kicker">Sistema de inventario</p>
+              <p class="brand-name">{{ empresa_nombre or 'Dotaciones Zambrano' }}</p>
+              <p class="brand-subtitle">Reporte consolidado del inventario general</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+      <!-- Datos de contacto -->
+      <td class="header-right">
+        <div class="meta-box">
+          <p class="meta-line"><strong>Telefono:</strong> {{ empresa_celular }}</p>
+          <p class="meta-line"><strong>Direccion:</strong> {{ empresa_direccion }}</p>
+          {% if empresa_email %}
+          <p class="meta-line"><strong>Email:</strong> {{ empresa_email }}</p>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+  </table>
+
+  <!-- Título -->
+  <div class="title-block">
+    <p class="title">Reporte de Resumen General</p>
+    <div class="title-chip"></div>
+  </div>
+
+  <!-- Info del reporte -->
+  <div class="info-card">
+    <table class="info-table">
       <tr>
-        <td class="brand-cell">
-          <table class="brand-table">
+        <td class="info-col-left">
+          <p class="info-line"><strong>Fecha del reporte:</strong> {{ fecha_generacion }}</p>
+          <p class="info-line"><strong>Categoria:</strong> {{ filtros['Categoria'] }}</p>
+          <p class="info-line"><strong>Producto:</strong> {{ filtros['Producto'] }}</p>
+        </td>
+        <td class="info-col-right">
+          <p class="info-line"><strong>Responsable:</strong> {{ responsable }}</p>
+          <p class="info-line"><strong>Tipo de reporte:</strong> {{ tipo_reporte }}</p>
+          <p class="info-line"><strong>Genero / Talla:</strong> {{ filtros['Genero'] }} / {{ filtros['Talla'] }}</p>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Tabla de datos -->
+  {% if filas %}
+  <div class="table-wrap">
+    <div class="table-title">Detalle del resumen</div>
+    <table class="main-table">
+      <colgroup>
+        {% for columna in columnas %}
+          {% if columna == 'Producto' %}   <col style="width:28%;">
+          {% elif columna == 'Estilo' %}   <col style="width:14%;">
+          {% elif columna == 'Color' %}    <col style="width:12%;">
+          {% elif columna == 'Talla' %}    <col style="width:8%;">
+          {% elif columna == 'Cantidad' %} <col style="width:9%;">
+          {% elif columna == 'Precio' %}   <col style="width:14%;">
+          {% elif columna == 'Total' %}    <col style="width:15%;">
+          {% else %}                       <col>
+          {% endif %}
+        {% endfor %}
+      </colgroup>
+      <thead>
+        <tr>
+          {% for columna in columnas %}
+          <th>{{ columna }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for fila in filas %}
+        <tr>
+          {% for columna in columnas %}
+          <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Resumen totales -->
+  <table class="summary-outer">
+    <tr>
+      <td class="summary-spacer"></td>
+      <td class="summary-card-wrap">
+        <div class="summary-card">
+          <p class="summary-title">Resumen del inventario</p>
+          <table class="summary-row">
             <tr>
-              <td class="logo-cell">
-                <div class="logo-box">
-                  {% if empresa_logo %}
-                  <img src="{{ empresa_logo }}" alt="Logo">
-                  {% else %}
-                  <div class="logo-fallback">LOGO</div>
-                  {% endif %}
-                </div>
-              </td>
-              <td>
-                <p class="brand-kicker">Sistema de inventario</p>
-                <p class="brand-name">{{ empresa_nombre or 'Dotaciones Zambrano' }}</p>
-                <p class="brand-subtitle">Reporte consolidado del inventario general</p>
-              </td>
+              <td class="summary-label">Cantidad de productos</td>
+              <td class="summary-value">{{ total_registros }}</td>
             </tr>
           </table>
-        </td>
-        <td class="meta-cell">
-          <div class="meta-box">
-            <p class="meta-line"><strong>Telefono:</strong> {{ empresa_celular }}</p>
-            <p class="meta-line"><strong>Direccion:</strong> {{ empresa_direccion }}</p>
-            {% if empresa_email %}
-            <p class="meta-line"><strong>Email:</strong> {{ empresa_email }}</p>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-    </table>
+          <table class="summary-row">
+            <tr>
+              <td class="summary-label">Cantidad total de unidades</td>
+              <td class="summary-value">{{ cantidad_total }}</td>
+            </tr>
+          </table>
+          <table class="summary-row">
+            <tr>
+              <td class="summary-label">Valor total inventario</td>
+              <td class="summary-value">{{ valor_total }}</td>
+            </tr>
+          </table>
+        </div>
+      </td>
+    </tr>
+  </table>
 
-    <div class="title-block">
-      <p class="title">Reporte de Resumen General</p>
-      <table class="divider">
-        <tr>
-          <td><div class="divider-line"></div></td>
-          <td style="width: 92px; text-align: center;"><div class="divider-chip"></div></td>
-          <td><div class="divider-line"></div></td>
-        </tr>
-      </table>
-    </div>
+  {% else %}
+  <div class="empty">No hay datos para este resumen.</div>
+  {% endif %}
 
-    <div class="info-card">
-      <table class="info-table">
-        <tr>
-          <td class="left">
-            <p class="info-line"><strong>Fecha del reporte:</strong> {{ fecha_generacion }}</p>
-            <p class="info-line"><strong>Categoria:</strong> {{ filtros['Categoria'] }}</p>
-            <p class="info-line"><strong>Producto:</strong> {{ filtros['Producto'] }}</p>
-          </td>
-          <td class="right">
-            <p class="info-line"><strong>Responsable:</strong> {{ responsable }}</p>
-            <p class="info-line"><strong>Tipo de reporte:</strong> {{ tipo_reporte }}</p>
-            <p class="info-line"><strong>Genero / Talla:</strong> {{ filtros['Genero'] }} / {{ filtros['Talla'] }}</p>
-          </td>
-        </tr>
-      </table>
-    </div>
-
-    {% if filas %}
-    <div class="table-wrap">
-      <div class="table-title">Detalle del resumen</div>
-      <table class="main-table">
-        <colgroup>
-          {% for columna in columnas %}
-          {% if columna == 'Producto' %}
-          <col style="width: 30%;">
-          {% elif columna == 'Estilo' %}
-          <col style="width: 13%;">
-          {% elif columna == 'Color' %}
-          <col style="width: 12%;">
-          {% elif columna == 'Talla' %}
-          <col style="width: 8%;">
-          {% elif columna == 'Cantidad' %}
-          <col style="width: 8%;">
-          {% elif columna == 'Precio' %}
-          <col style="width: 14%;">
-          {% elif columna == 'Total' %}
-          <col style="width: 15%;">
-          {% else %}
-          <col>
-          {% endif %}
-          {% endfor %}
-        </colgroup>
-        <thead>
-          <tr>
-            {% for columna in columnas %}
-            <th>{{ columna }}</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody>
-          {% for fila in filas %}
-          <tr>
-            {% for columna in columnas %}
-            <td>{{ fila[columna] if fila[columna] is not none else 'N/A' }}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <table class="summary-table">
-      <tr>
-        <td></td>
-        <td class="summary-card-cell">
-          <div class="summary-card">
-            <p class="summary-title">Resumen del inventario</p>
-            <p class="summary-line">Cantidad de productos <span class="summary-value">{{ total_registros }}</span></p>
-            <p class="summary-line">Cantidad total de productos <span class="summary-value">{{ cantidad_total }}</span></p>
-            <p class="summary-line">Valor total inventario <span class="summary-value">{{ valor_total }}</span></p>
-          </div>
-        </td>
-      </tr>
-    </table>
-    {% else %}
-    <div class="empty">No hay datos para este resumen.</div>
-    {% endif %}
-
-    <div class="footer">
-      {{ empresa_nombre or 'Dotaciones Zambrano' }} &copy; 2026 | Inventario.
-    </div>
-
-    <div class="frame-bottom"></div>
+  <!-- Footer -->
+  <div class="footer">
+    {{ empresa_nombre or 'Dotaciones Zambrano' }} &copy; 2026 | Inventario.
   </div>
+
+  <!-- Barra inferior -->
+  <div class="frame-bottom"></div>
+
+</div>
 </body>
 </html>
