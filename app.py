@@ -27,15 +27,19 @@ app = Flask(__name__)
 # ============================================
 CORS(
     app,
-    origins=[
-        "https://dotacioneszambrano.com",
-        "https://www.dotacioneszambrano.com",
-        "https://pruebas.dotacioneszambrano.com",
-        "https://front-inventario.pages.dev",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ],
-    supports_credentials=True
+    resources={
+        r"/*": {
+            "origins": [
+                r"https://([a-z0-9-]+\.)?dotacioneszambrano\.com",
+                "https://front-inventario.pages.dev",
+                "http://127.0.0.1:5500",
+                "http://localhost:5500"
+            ],
+            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Authorization"],
+            "supports_credentials": True
+        }
+    }
 )
 
 
