@@ -31,6 +31,7 @@ CORS(
         "https://dotacioneszambrano.com",
         "https://www.dotacioneszambrano.com",
         "https://pruebas.dotacioneszambrano.com",
+        "https://front-inventario.pages.dev",
         "http://127.0.0.1:5500",
         "http://localhost:5500"
     ],
