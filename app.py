@@ -650,14 +650,26 @@ def delete_productos():
 def actualizar_stock():
     data = request.get_json()
 
-    id_variante  = data.get("id_variante")
-    cantidad     = data.get("cantidad")
+    id_variante = data.get("id_variante")
+    cantidad = data.get("cantidad")
     precio_venta = data.get("precio_venta")
 
     if None in (id_variante, cantidad, precio_venta):
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
+    try:
+        id_variante = int(id_variante)
+        cantidad = int(cantidad)
+        precio_venta = float(precio_venta)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Formato inválido en id_variante, cantidad o precio_venta"}), 400
+
+    if cantidad <= 0 or precio_venta < 0:
+        return jsonify({"ok": False, "error": "Cantidad o precio de venta inválido"}), 400
+
     conn = get_connection()
+    if not conn:
+        return jsonify({"ok": False, "error": "No se pudo conectar a la base de datos"}), 500
     cursor = conn.cursor(dictionary=True)
 
     try:
@@ -686,15 +698,16 @@ def actualizar_stock():
         cursor.execute("""
             INSERT INTO movimientos_inventario
             (id_variante, tipo, cantidad, stock_anterior, stock_nuevo,
-             fecha, precio_venta, fecha_venta, total_venta)
-            VALUES (%s, 'SALIDA', %s, %s, %s, NOW(), %s, NOW(), %s)
+             fecha, precio_venta, total_venta, precio_compra)
+            VALUES (%s, 'SALIDA', %s, %s, %s, NOW(), %s, %s, %s)
         """, (
             id_variante,
             cantidad,
             stock_anterior,
             stock_nuevo,
             precio_venta,
-            total_venta
+            total_venta,
+            None
         ))
 
         conn.commit()
@@ -714,20 +727,35 @@ def entrada_stock():
     data = request.get_json()
 
     id_variante = data.get("id_variante")
-    cantidad    = data.get("cantidad")
+    cantidad = data.get("cantidad")
+    precio_compra = data.get("precio_compra")
 
-    if None in (id_variante, cantidad):
+    if None in (id_variante, cantidad, precio_compra):
         return jsonify({"ok": False, "error": "Datos incompletos"}), 400
 
+    try:
+        id_variante = int(id_variante)
+        cantidad = int(cantidad)
+        precio_compra = float(precio_compra)
+    except (TypeError, ValueError):
+        return jsonify({"ok": False, "error": "Formato inválido en id_variante, cantidad o precio_compra"}), 400
+
+    if cantidad <= 0 or precio_compra < 0:
+        return jsonify({"ok": False, "error": "Cantidad o precio de compra inválido"}), 400
+
     conn = get_connection()
+    if not conn:
+        return jsonify({"ok": False, "error": "No se pudo conectar a la base de datos"}), 500
     cursor = conn.cursor(dictionary=True)
 
     try:
         cursor.execute(
-            "SELECT stock FROM variantes WHERE id_variante = %s",
+            "SELECT stock FROM variantes WHERE id_variante = %s AND id_estado = 1",
             (id_variante,)
         )
         row = cursor.fetchone()
+        if not row:
+            return jsonify({"ok": False, "error": "Variante no encontrada"}), 404
 
         stock_anterior = row["stock"]
         stock_nuevo = stock_anterior + cantidad
@@ -739,13 +767,14 @@ def entrada_stock():
 
         cursor.execute("""
             INSERT INTO movimientos_inventario
-            (id_variante, tipo, cantidad, stock_anterior, stock_nuevo, fecha)
-            VALUES (%s, 'ENTRADA', %s, %s, %s, NOW())
+            (id_variante, tipo, cantidad, stock_anterior, stock_nuevo, fecha, precio_compra)
+            VALUES (%s, 'ENTRADA', %s, %s, %s, NOW(), %s)
         """, (
             id_variante,
             cantidad,
             stock_anterior,
-            stock_nuevo
+            stock_nuevo,
+            precio_compra
         ))
 
         conn.commit()
@@ -754,6 +783,137 @@ def entrada_stock():
     except Exception as e:
         conn.rollback()
         return jsonify({"ok": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def normalizar_periodo_ventas(periodo_raw):
+    periodo = str(periodo_raw or "dia").strip().lower()
+    if periodo in ("dia", "semana", "mes"):
+        return periodo
+    return "dia"
+
+
+def obtener_filtro_periodo_ventas(periodo):
+    if periodo == "semana":
+        return (
+            "YEARWEEK(mi.fecha, 1) = YEARWEEK(CURDATE(), 1)",
+            "Semana actual"
+        )
+    if periodo == "mes":
+        return (
+            """
+            YEAR(mi.fecha) = YEAR(CURDATE())
+            AND MONTH(mi.fecha) = MONTH(CURDATE())
+            """,
+            "Mes actual"
+        )
+    return ("DATE(mi.fecha) = CURDATE()", "Hoy")
+
+
+@app.route("/VentasResumen", methods=["GET"])
+def ventas_resumen():
+    if "idUsuario" not in session:
+        return jsonify({"ok": False, "error": "Sesión no válida"}), 401
+
+    periodo = normalizar_periodo_ventas(request.args.get("periodo"))
+    where_periodo, periodo_label = obtener_filtro_periodo_ventas(periodo)
+
+    conn = get_connection()
+    if not conn:
+        return jsonify({"ok": False, "error": "No se pudo conectar a la base de datos"}), 500
+
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        query = f"""
+            SELECT
+                p.id_producto AS id_producto,
+                p.nombre AS producto,
+                SUM(mi.cantidad) AS cantidad_vendida,
+                ROUND(
+                    SUM(mi.cantidad * COALESCE(v.precio, 0))
+                    / NULLIF(SUM(mi.cantidad), 0),
+                    2
+                ) AS valor_compra_unitario,
+                ROUND(
+                    SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0)))
+                    / NULLIF(SUM(mi.cantidad), 0),
+                    2
+                ) AS valor_venta_unitario,
+                ROUND(SUM(mi.cantidad * COALESCE(v.precio, 0)), 2) AS total_compra,
+                ROUND(SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0))), 2) AS total_venta,
+                ROUND(
+                    SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0)))
+                    - SUM(mi.cantidad * COALESCE(v.precio, 0)),
+                    2
+                ) AS ganancia
+            FROM movimientos_inventario mi
+            JOIN variantes v ON mi.id_variante = v.id_variante
+            JOIN productos p ON v.id_producto = p.id_producto
+            WHERE mi.tipo = 'SALIDA'
+              AND mi.cantidad > 0
+              AND p.id_estado = 1
+              AND v.id_estado = 1
+              AND {where_periodo}
+            GROUP BY p.id_producto, p.nombre
+            ORDER BY total_venta DESC, p.nombre ASC
+        """
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        total_unidades = 0
+        total_compra = 0.0
+        total_venta = 0.0
+        filas = []
+
+        for row in rows:
+            cantidad = int(row.get("cantidad_vendida") or 0)
+            compra_unit = float(row.get("valor_compra_unitario") or 0)
+            venta_unit = float(row.get("valor_venta_unitario") or 0)
+            compra_total = float(row.get("total_compra") or 0)
+            venta_total = float(row.get("total_venta") or 0)
+            ganancia = float(row.get("ganancia") or 0)
+
+            total_unidades += cantidad
+            total_compra += compra_total
+            total_venta += venta_total
+
+            filas.append({
+                "id_producto": row.get("id_producto"),
+                "producto": row.get("producto") or "Sin nombre",
+                "cantidad_vendida": cantidad,
+                "valor_compra_unitario": round(compra_unit, 2),
+                "valor_venta_unitario": round(venta_unit, 2),
+                "total_compra": round(compra_total, 2),
+                "total_venta": round(venta_total, 2),
+                "ganancia": round(ganancia, 2)
+            })
+
+        ganancia_total = total_venta - total_compra
+
+        return jsonify({
+            "ok": True,
+            "periodo": periodo,
+            "periodo_label": periodo_label,
+            "rows": filas,
+            "resumen": {
+                "total_productos": len(filas),
+                "total_unidades": total_unidades,
+                "total_compra": round(total_compra, 2),
+                "total_venta": round(total_venta, 2),
+                "ganancia_total": round(ganancia_total, 2)
+            }
+        })
+
+    except Exception as e:
+        print("ERROR VENTAS RESUMEN:", e)
+        return jsonify({"ok": False, "error": str(e)}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
 
 
 
