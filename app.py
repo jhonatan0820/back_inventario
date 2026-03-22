@@ -866,21 +866,49 @@ def normalizar_periodo_ventas(periodo_raw):
     return "dia"
 
 
-def obtener_filtro_periodo_ventas(periodo):
+def obtener_rango_periodo_ventas(periodo):
+    ahora = datetime.now()
+    inicio = ahora.replace(hour=0, minute=0, second=0, microsecond=0)
+
     if periodo == "semana":
-        return (
-            "YEARWEEK(mi.fecha, 1) = YEARWEEK(CURDATE(), 1)",
-            "Semana actual"
+        inicio = (ahora - timedelta(days=ahora.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
         )
+        return inicio, ahora, "Semana actual"
+
     if periodo == "mes":
-        return (
-            """
-            YEAR(mi.fecha) = YEAR(CURDATE())
-            AND MONTH(mi.fecha) = MONTH(CURDATE())
-            """,
-            "Mes actual"
-        )
-    return ("DATE(mi.fecha) = CURDATE()", "Hoy")
+        inicio = ahora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        return inicio, ahora, "Mes actual"
+
+    return inicio, ahora, "Hoy"
+
+
+def consumir_fifo_lotes_detalle(lotes, cantidad_salida):
+    restante = float(cantidad_salida)
+    detalles = []
+
+    while restante > 0 and lotes:
+        lote = lotes[0]
+        disponible = float(lote["restante"])
+        if disponible <= 0:
+            lotes.pop(0)
+            continue
+
+        tomado = min(restante, disponible)
+        precio_compra = float(lote["precio_compra"])
+        costo = tomado * precio_compra
+        detalles.append({
+            "cantidad": tomado,
+            "precio_compra_unitario": precio_compra,
+            "costo": costo
+        })
+        lote["restante"] = disponible - tomado
+        restante -= tomado
+
+        if lote["restante"] <= 0:
+            lotes.pop(0)
+
+    return detalles
 
 
 @app.route("/VentasResumen", methods=["GET"])
@@ -889,7 +917,7 @@ def ventas_resumen():
         return jsonify({"ok": False, "error": "Sesión no válida"}), 401
 
     periodo = normalizar_periodo_ventas(request.args.get("periodo"))
-    where_periodo, periodo_label = obtener_filtro_periodo_ventas(periodo)
+    inicio_periodo, fin_periodo, periodo_label = obtener_rango_periodo_ventas(periodo)
 
     conn = get_connection()
     if not conn:
@@ -898,102 +926,148 @@ def ventas_resumen():
     cursor = conn.cursor(dictionary=True)
 
     try:
-        query = f"""
+        query = """
             SELECT
+                mi.id_movimiento AS id_movimiento,
+                mi.id_variante AS id_variante,
+                mi.tipo AS tipo,
+                mi.cantidad AS cantidad,
+                mi.fecha AS fecha,
+                mi.precio_venta AS precio_venta,
+                mi.total_venta AS total_venta,
+                mi.precio_compra AS precio_compra,
                 p.id_producto AS id_producto,
-                p.nombre AS producto,
-                SUM(mi.cantidad) AS cantidad_vendida,
-                ROUND(
-                    SUM(
-                        mi.cantidad * COALESCE((
-                            SELECT me.precio_compra
-                            FROM movimientos_inventario me
-                            WHERE me.id_variante = mi.id_variante
-                              AND me.tipo = 'ENTRADA'
-                              AND me.precio_compra IS NOT NULL
-                            ORDER BY me.fecha ASC, me.id_movimiento ASC
-                            LIMIT 1
-                        ), 0)
-                    )
-                    / NULLIF(SUM(mi.cantidad), 0),
-                    2
-                ) AS valor_compra_unitario,
-                ROUND(
-                    SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0)))
-                    / NULLIF(SUM(mi.cantidad), 0),
-                    2
-                ) AS valor_venta_unitario,
-                ROUND(
-                    SUM(
-                        mi.cantidad * COALESCE((
-                            SELECT me.precio_compra
-                            FROM movimientos_inventario me
-                            WHERE me.id_variante = mi.id_variante
-                              AND me.tipo = 'ENTRADA'
-                              AND me.precio_compra IS NOT NULL
-                            ORDER BY me.fecha ASC, me.id_movimiento ASC
-                            LIMIT 1
-                        ), 0)
-                    ),
-                    2
-                ) AS total_compra,
-                ROUND(SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0))), 2) AS total_venta,
-                ROUND(
-                    SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0)))
-                    - SUM(
-                        mi.cantidad * COALESCE((
-                            SELECT me.precio_compra
-                            FROM movimientos_inventario me
-                            WHERE me.id_variante = mi.id_variante
-                              AND me.tipo = 'ENTRADA'
-                              AND me.precio_compra IS NOT NULL
-                            ORDER BY me.fecha ASC, me.id_movimiento ASC
-                            LIMIT 1
-                        ), 0)
-                    ),
-                    2
-                ) AS ganancia
+                p.nombre AS producto
             FROM movimientos_inventario mi
             JOIN variantes v ON mi.id_variante = v.id_variante
             JOIN productos p ON v.id_producto = p.id_producto
-            WHERE mi.tipo = 'SALIDA'
+            WHERE mi.tipo IN ('ENTRADA', 'SALIDA')
               AND mi.cantidad > 0
-              AND p.id_estado = 1
-              AND v.id_estado = 1
-              AND {where_periodo}
-            GROUP BY p.id_producto, p.nombre
-            ORDER BY total_venta DESC, p.nombre ASC
+              AND mi.fecha <= %s
+            ORDER BY mi.fecha ASC, mi.id_movimiento ASC
         """
-        cursor.execute(query)
-        rows = cursor.fetchall()
+        cursor.execute(query, (fin_periodo,))
+        movimientos = cursor.fetchall()
 
         total_unidades = 0
         total_compra = 0.0
         total_venta = 0.0
         filas = []
 
-        for row in rows:
-            cantidad = int(row.get("cantidad_vendida") or 0)
-            compra_unit = float(row.get("valor_compra_unitario") or 0)
-            venta_unit = float(row.get("valor_venta_unitario") or 0)
-            compra_total = float(row.get("total_compra") or 0)
-            venta_total = float(row.get("total_venta") or 0)
-            ganancia = float(row.get("ganancia") or 0)
+        lotes_por_variante = defaultdict(list)
+        acumulado_por_detalle = {}
 
-            total_unidades += cantidad
-            total_compra += compra_total
-            total_venta += venta_total
+        for mov in movimientos:
+            tipo = (mov.get("tipo") or "").upper()
+            id_variante = mov.get("id_variante")
+            cantidad = int(mov.get("cantidad") or 0)
+            fecha = mov.get("fecha")
+
+            if cantidad <= 0 or not id_variante or not fecha:
+                continue
+
+            if tipo == "ENTRADA":
+                precio_compra = mov.get("precio_compra")
+                if precio_compra is None:
+                    continue
+
+                lotes_por_variante[id_variante].append({
+                    "restante": float(cantidad),
+                    "precio_compra": float(precio_compra)
+                })
+                continue
+
+            if tipo != "SALIDA":
+                continue
+
+            detalles_fifo = consumir_fifo_lotes_detalle(lotes_por_variante[id_variante], cantidad)
+            cantidad_cubierta = sum(float(det.get("cantidad") or 0) for det in detalles_fifo)
+            faltante = max(0.0, float(cantidad) - cantidad_cubierta)
+            if faltante > 0:
+                detalles_fifo.append({
+                    "cantidad": faltante,
+                    "precio_compra_unitario": 0.0,
+                    "costo": 0.0
+                })
+
+            if fecha < inicio_periodo or fecha > fin_periodo:
+                continue
+
+            precio_venta = mov.get("precio_venta")
+            venta_total = mov.get("total_venta")
+            venta_total_calc = float(venta_total) if venta_total is not None else float(cantidad) * float(precio_venta or 0)
+
+            id_producto = mov.get("id_producto")
+            producto = mov.get("producto") or "Sin nombre"
+            fecha_venta = fecha.strftime("%Y-%m-%d") if hasattr(fecha, "strftime") else str(fecha)[:10]
+            venta_unit_mov = (float(venta_total_calc) / float(cantidad)) if cantidad else 0.0
+
+            for det in detalles_fifo:
+                cantidad_det = float(det.get("cantidad") or 0)
+                if cantidad_det <= 0:
+                    continue
+
+                precio_compra_unit = float(det.get("precio_compra_unitario") or 0.0)
+                compra_total_det = float(det.get("costo") or 0.0)
+                proporcion_venta = cantidad_det / float(cantidad) if cantidad else 0.0
+                venta_total_det = float(venta_total_calc) * proporcion_venta
+
+                key = (
+                    id_producto,
+                    fecha_venta,
+                    round(precio_compra_unit, 2),
+                    round(venta_unit_mov, 2)
+                )
+
+                if key not in acumulado_por_detalle:
+                    acumulado_por_detalle[key] = {
+                        "id_producto": id_producto,
+                        "producto": producto,
+                        "fecha_venta": fecha_venta,
+                        "valor_compra_unitario": round(precio_compra_unit, 2),
+                        "valor_venta_unitario": round(venta_unit_mov, 2),
+                        "cantidad_vendida": 0.0,
+                        "total_compra": 0.0,
+                        "total_venta": 0.0
+                    }
+
+                acumulado_por_detalle[key]["cantidad_vendida"] += cantidad_det
+                acumulado_por_detalle[key]["total_compra"] += compra_total_det
+                acumulado_por_detalle[key]["total_venta"] += venta_total_det
+
+        productos_unicos = set()
+
+        for row in acumulado_por_detalle.values():
+            cantidad_row = int(round(float(row["cantidad_vendida"])))
+            compra_total_row = float(row["total_compra"])
+            venta_total_row = float(row["total_venta"])
+            ganancia_row = venta_total_row - compra_total_row
+
+            total_unidades += cantidad_row
+            total_compra += compra_total_row
+            total_venta += venta_total_row
+            productos_unicos.add(row.get("id_producto"))
 
             filas.append({
                 "id_producto": row.get("id_producto"),
                 "producto": row.get("producto") or "Sin nombre",
-                "cantidad_vendida": cantidad,
-                "valor_compra_unitario": round(compra_unit, 2),
-                "valor_venta_unitario": round(venta_unit, 2),
-                "total_compra": round(compra_total, 2),
-                "total_venta": round(venta_total, 2),
-                "ganancia": round(ganancia, 2)
+                "fecha_venta": row.get("fecha_venta"),
+                "cantidad_vendida": cantidad_row,
+                "valor_compra_unitario": round(float(row.get("valor_compra_unitario") or 0), 2),
+                "valor_venta_unitario": round(float(row.get("valor_venta_unitario") or 0), 2),
+                "total_compra": round(compra_total_row, 2),
+                "total_venta": round(venta_total_row, 2),
+                "ganancia": round(ganancia_row, 2)
             })
+
+        filas.sort(
+            key=lambda item: (
+                item.get("fecha_venta") or "",
+                (item.get("producto") or "").lower(),
+                float(item.get("valor_compra_unitario") or 0)
+            ),
+            reverse=True
+        )
 
         ganancia_total = total_venta - total_compra
 
@@ -1003,7 +1077,7 @@ def ventas_resumen():
             "periodo_label": periodo_label,
             "rows": filas,
             "resumen": {
-                "total_productos": len(filas),
+                "total_productos": len(productos_unicos),
                 "total_unidades": total_unidades,
                 "total_compra": round(total_compra, 2),
                 "total_venta": round(total_venta, 2),
