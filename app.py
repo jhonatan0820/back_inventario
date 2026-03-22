@@ -146,29 +146,52 @@ RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 
 def get_connection():
-    try:
-        database_url = os.environ.get("MYSQL_URL")
-        if not database_url:
-            print("MYSQL_URL no definida")
+    database_url = os.environ.get("MYSQL_URL")
+    if not database_url:
+        print("MYSQL_URL no definida")
+        return None
+
+    parsed = urlparse(database_url)
+
+    max_attempts = 4
+    for intento in range(max_attempts):
+        try:
+            conn = mysql.connector.connect(
+                host=parsed.hostname,
+                port=parsed.port or 3306,
+                user=parsed.username,
+                password=parsed.password,
+                database=parsed.path.lstrip("/"),
+                ssl_disabled=False,
+                connection_timeout=5
+            )
+            return conn
+        except Exception as e:
+            error_code = getattr(e, "errno", None)
+            es_max_conn = error_code == 1226 or "max_user_connections" in str(e).lower()
+
+            if es_max_conn and intento < (max_attempts - 1):
+                time.sleep(0.2 * (intento + 1))
+                continue
+
+            print("ERROR CONECTANDO A MYSQL:", e)
             return None
 
-        parsed = urlparse(database_url)
+    return None
 
-        conn = mysql.connector.connect(
-            host=parsed.hostname,
-            port=parsed.port or 3306,
-            user=parsed.username,
-            password=parsed.password,
-            database=parsed.path.lstrip("/"),
-            ssl_disabled=False,
-            connection_timeout=5
-        )
 
-        return conn
+def close_db(cursor=None, conn=None):
+    try:
+        if cursor:
+            cursor.close()
+    except Exception:
+        pass
 
-    except Exception as e:
-        print("ERROR CONECTANDO A MYSQL:", e)
-        return None
+    try:
+        if conn:
+            conn.close()
+    except Exception:
+        pass
 
 @app.route("/ping", methods=["GET", "HEAD"])
 def ping():
@@ -419,37 +442,42 @@ def reset_password():
 
 @app.route("/GetProductos", methods=["GET"])
 def get_productos():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT
-            p.id_producto AS id_producto,
-            p.nombre AS nomproducto,
-            cat.nombre AS categoria,
-            v.id_variante AS id_variante,
-            m.nombre AS marca,
-            e.nombre AS estilo,
-            c.nombre AS color,
-            t.valor AS talla,
-            v.precio AS precio,
-            v.stock AS stock
-        FROM variantes v
-        JOIN productos p ON v.id_producto = p.id_producto
-        LEFT JOIN marcas m ON p.id_marca = m.id_marca
-        JOIN categorias cat ON p.id_categoria = cat.id_categoria
-        LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
-        LEFT JOIN colores c ON v.id_color = c.id_color
-        LEFT JOIN tallas t ON v.id_talla = t.id_talla
-        WHERE p.id_estado = 1 and v.id_estado = 1
-    """)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+                p.id_producto AS id_producto,
+                p.nombre AS nomproducto,
+                cat.nombre AS categoria,
+                v.id_variante AS id_variante,
+                m.nombre AS marca,
+                e.nombre AS estilo,
+                c.nombre AS color,
+                t.valor AS talla,
+                v.precio AS precio,
+                v.stock AS stock
+            FROM variantes v
+            JOIN productos p ON v.id_producto = p.id_producto
+            LEFT JOIN marcas m ON p.id_marca = m.id_marca
+            JOIN categorias cat ON p.id_categoria = cat.id_categoria
+            LEFT JOIN estilos e ON p.id_estilo = e.id_estilo
+            LEFT JOIN colores c ON v.id_color = c.id_color
+            LEFT JOIN tallas t ON v.id_talla = t.id_talla
+            WHERE p.id_estado = 1 and v.id_estado = 1
+        """)
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET PRODUCTOS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 
@@ -640,7 +668,8 @@ def add_producto():
 
 @app.route("/DeleteProductos", methods=["POST"])
 def delete_productos():
-
+    conn = None
+    cursor = None
     try:
         data = request.get_json(force=True)
         ids = data.get("ids", [])
@@ -649,6 +678,8 @@ def delete_productos():
             return jsonify({"error": "IDs inválidos"}), 400
 
         conn = get_connection()
+        if not conn:
+            return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
         cursor = conn.cursor(dictionary=True)
 
         placeholders = ",".join(["%s"] * len(ids))
@@ -704,17 +735,21 @@ def delete_productos():
                 )
                 conn.commit()
 
-        cursor.close()
-        conn.close()
-
         return jsonify({
             "ok": True,
             "eliminados": eliminados
         })
 
     except Exception as e:
+        if conn:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         print("ERROR BORRANDO PRODUCTO:", e)
         return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/ActualizarStock", methods=["POST"])
@@ -1102,22 +1137,27 @@ def ventas_resumen():
 
 @app.route("/GetCategorias", methods=["GET"])
 def get_categorias():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT id_categoria, nombre
-        FROM categorias
-        WHERE id_estado = 1
-        ORDER BY nombre
-    """)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id_categoria, nombre
+            FROM categorias
+            WHERE id_estado = 1
+            ORDER BY nombre
+        """)
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET CATEGORIAS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/AddCategoria", methods=["POST"])
@@ -1130,6 +1170,9 @@ def add_categoria():
         return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
     conn = get_connection()
+    if not conn:
+        return jsonify({"ok": False, "error": "No se pudo conectar a la base de datos"}), 500
+
     cursor = conn.cursor()
 
     try:
@@ -1149,36 +1192,45 @@ def add_categoria():
 
 @app.route("/GetGeneros", methods=["GET"])
 def get_generos():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT id_genero, nombre
-        FROM generos
-        WHERE id_estado = 1
-    """)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT id_genero, nombre
+            FROM generos
+            WHERE id_estado = 1
+        """)
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET GENEROS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetColores", methods=["GET"])
 def get_colores():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("SELECT id_color, nombre FROM colores WHERE id_estado = 1 ORDER BY nombre")
-    data = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_color, nombre FROM colores WHERE id_estado = 1 ORDER BY nombre")
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET COLORES:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/AddColor", methods=["POST",])
@@ -1191,6 +1243,9 @@ def add_color():
         return jsonify({"ok": False, "error": "Nombre requerido"}), 400
 
     conn = get_connection()
+    if not conn:
+        return jsonify({"ok": False, "error": "No se pudo conectar a la base de datos"}), 500
+
     cursor = conn.cursor()
 
     try:
@@ -1214,17 +1269,21 @@ def add_color():
 
 @app.route("/GetTallas", methods=["GET"])
 def get_tallas():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("SELECT id_talla, valor, id_genero FROM tallas ORDER BY valor")
-    data = cursor.fetchall()
-
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT id_talla, valor, id_genero FROM tallas ORDER BY valor")
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET TALLAS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetTallasPorCategoriaGenero", methods=["GET"])
@@ -1237,22 +1296,28 @@ def get_tallas_por_categoria_genero():
         return jsonify([])
 
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT DISTINCT valor, id_talla 
-        FROM tallas
-        WHERE id_categoria = %s
-          AND id_genero = %s
-          AND id_estado = 1
-        ORDER BY id_talla
-    """, (id_categoria, id_genero))
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT DISTINCT valor, id_talla 
+            FROM tallas
+            WHERE id_categoria = %s
+              AND id_genero = %s
+              AND id_estado = 1
+            ORDER BY id_talla
+        """, (id_categoria, id_genero))
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET TALLAS POR CATEGORIA GENERO:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetTallasPorCategoria", methods=["GET"])
@@ -1264,49 +1329,62 @@ def get_tallas_por_categoria():
         return jsonify([])
 
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT DISTINCT valor AS talla
-        FROM tallas
-        WHERE id_categoria = %s
-          AND id_estado = 1
-        ORDER BY valor
-    """, (id_categoria,))
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT DISTINCT valor AS talla
+            FROM tallas
+            WHERE id_categoria = %s
+              AND id_estado = 1
+            ORDER BY valor
+        """, (id_categoria,))
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET TALLAS POR CATEGORIA:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetEstilosUnicos", methods=["GET"])
 def get_estilos_unicos():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT DISTINCT
-            TRIM(LOWER(nombre)) AS nombre
-        FROM estilos
-        WHERE id_estado = 1
-        ORDER BY nombre
-    """)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT DISTINCT
+                TRIM(LOWER(nombre)) AS nombre
+            FROM estilos
+            WHERE id_estado = 1
+            ORDER BY nombre
+        """)
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET ESTILOS UNICOS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetTallasValidas", methods=["GET"])
 def get_tallas_validas():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
+
+    cursor = None
 
     id_categoria = request.args.get("id_categoria", type=int)
 
@@ -1324,35 +1402,43 @@ def get_tallas_validas():
 
     query += " ORDER BY t.valor"
 
-    cursor.execute(query, params)
-
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET TALLAS VALIDAS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/GetNombresProductos", methods=["GET"])
 def get_nombres_productos():
-        
     conn = get_connection()
-    cursor = conn.cursor(dictionary=True)
+    if not conn:
+        return jsonify({"error": "No se pudo conectar a la base de datos"}), 500
 
-    cursor.execute("""
-        SELECT
-            TRIM(LOWER(nombre)) AS nombre
-        FROM productos
-        WHERE id_estado = 1
-        GROUP BY TRIM(LOWER(nombre))
-        ORDER BY nombre
-    """)
+    cursor = None
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT
+                TRIM(LOWER(nombre)) AS nombre
+            FROM productos
+            WHERE id_estado = 1
+            GROUP BY TRIM(LOWER(nombre))
+            ORDER BY nombre
+        """)
 
-    data = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return jsonify(data)
+        data = cursor.fetchall()
+        return jsonify(data)
+    except Exception as e:
+        print("ERROR GET NOMBRES PRODUCTOS:", e)
+        return jsonify({"error": str(e)}), 500
+    finally:
+        close_db(cursor, conn)
 
 
 @app.route("/InformationGeneral", methods=["GET"])
