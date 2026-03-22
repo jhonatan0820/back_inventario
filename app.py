@@ -42,6 +42,71 @@ CORS(
     }
 )
 
+def get_allowed_origin(origin):
+    if not origin:
+        return None
+
+    allowed_exact = {
+        "https://dotacioneszambrano.com",
+        "https://www.dotacioneszambrano.com",
+        "https://pruebas.dotacioneszambrano.com",
+        "https://front-inventario.pages.dev",
+        "http://127.0.0.1:5500",
+        "http://localhost:5500"
+    }
+
+    if origin in allowed_exact:
+        return origin
+
+    try:
+        parsed = urlparse(origin)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme == "https" and (
+            host == "dotacioneszambrano.com" or host.endswith(".dotacioneszambrano.com")
+        ):
+            return origin
+    except Exception:
+        return None
+
+    return None
+
+
+@app.before_request
+def handle_cors_preflight():
+    if request.method != "OPTIONS":
+        return None
+
+    origin = get_allowed_origin(request.headers.get("Origin"))
+    response = make_response("", 204)
+
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+        request_headers = request.headers.get("Access-Control-Request-Headers", "").strip()
+        response.headers["Access-Control-Allow-Headers"] = request_headers or "Content-Type, Authorization"
+        response.headers["Vary"] = "Origin"
+
+    return response
+
+
+@app.after_request
+def apply_cors_headers(response):
+    origin = get_allowed_origin(request.headers.get("Origin"))
+    if not origin:
+        return response
+
+    response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+
+    if "Access-Control-Allow-Headers" not in response.headers:
+        request_headers = request.headers.get("Access-Control-Request-Headers", "").strip()
+        response.headers["Access-Control-Allow-Headers"] = request_headers or "Content-Type, Authorization"
+
+    response.headers["Vary"] = "Origin"
+    return response
+
 
 # ============================================
 # CONFIGURACIÓN DE SESIÓN OPTIMIZADA
