@@ -904,7 +904,17 @@ def ventas_resumen():
                 p.nombre AS producto,
                 SUM(mi.cantidad) AS cantidad_vendida,
                 ROUND(
-                    SUM(mi.cantidad * COALESCE(v.precio, 0))
+                    SUM(
+                        mi.cantidad * COALESCE((
+                            SELECT me.precio_compra
+                            FROM movimientos_inventario me
+                            WHERE me.id_variante = mi.id_variante
+                              AND me.tipo = 'ENTRADA'
+                              AND me.precio_compra IS NOT NULL
+                            ORDER BY me.fecha ASC, me.id_movimiento ASC
+                            LIMIT 1
+                        ), 0)
+                    )
                     / NULLIF(SUM(mi.cantidad), 0),
                     2
                 ) AS valor_compra_unitario,
@@ -913,11 +923,34 @@ def ventas_resumen():
                     / NULLIF(SUM(mi.cantidad), 0),
                     2
                 ) AS valor_venta_unitario,
-                ROUND(SUM(mi.cantidad * COALESCE(v.precio, 0)), 2) AS total_compra,
+                ROUND(
+                    SUM(
+                        mi.cantidad * COALESCE((
+                            SELECT me.precio_compra
+                            FROM movimientos_inventario me
+                            WHERE me.id_variante = mi.id_variante
+                              AND me.tipo = 'ENTRADA'
+                              AND me.precio_compra IS NOT NULL
+                            ORDER BY me.fecha ASC, me.id_movimiento ASC
+                            LIMIT 1
+                        ), 0)
+                    ),
+                    2
+                ) AS total_compra,
                 ROUND(SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0))), 2) AS total_venta,
                 ROUND(
                     SUM(COALESCE(mi.total_venta, mi.cantidad * COALESCE(mi.precio_venta, 0)))
-                    - SUM(mi.cantidad * COALESCE(v.precio, 0)),
+                    - SUM(
+                        mi.cantidad * COALESCE((
+                            SELECT me.precio_compra
+                            FROM movimientos_inventario me
+                            WHERE me.id_variante = mi.id_variante
+                              AND me.tipo = 'ENTRADA'
+                              AND me.precio_compra IS NOT NULL
+                            ORDER BY me.fecha ASC, me.id_movimiento ASC
+                            LIMIT 1
+                        ), 0)
+                    ),
                     2
                 ) AS ganancia
             FROM movimientos_inventario mi
