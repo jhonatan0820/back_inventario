@@ -1003,12 +1003,9 @@ def ventas_resumen():
 
             if tipo == "ENTRADA":
                 precio_compra = mov.get("precio_compra")
-                if precio_compra is None:
-                    continue
-
                 lotes_por_variante[id_variante].append({
                     "restante": float(cantidad),
-                    "precio_compra": float(precio_compra)
+                    "precio_compra": float(precio_compra) if precio_compra is not None else 0.0
                 })
                 continue
 
