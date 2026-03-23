@@ -972,10 +972,12 @@ def ventas_resumen():
                 mi.total_venta AS total_venta,
                 mi.precio_compra AS precio_compra,
                 p.id_producto AS id_producto,
-                p.nombre AS producto
+                TRIM(CONCAT(m.nombre, ' ', COALESCE(e.nombre, ''))) AS producto
             FROM movimientos_inventario mi
             JOIN variantes v ON mi.id_variante = v.id_variante
             JOIN productos p ON v.id_producto = p.id_producto
+            JOIN marcas m ON m.id_marca = p.id_marca
+            LEFT JOIN estilos e ON e.id_estilo = p.id_estilo
             WHERE mi.tipo IN ('ENTRADA', 'SALIDA')
               AND mi.cantidad > 0
               AND mi.fecha <= %s
@@ -1045,6 +1047,7 @@ def ventas_resumen():
                 venta_total_det = float(venta_total_calc) * proporcion_venta
 
                 key = (
+                    id_variante,
                     id_producto,
                     fecha_venta,
                     round(precio_compra_unit, 2),
@@ -1053,6 +1056,7 @@ def ventas_resumen():
 
                 if key not in acumulado_por_detalle:
                     acumulado_por_detalle[key] = {
+                        "id_variante": id_variante,
                         "id_producto": id_producto,
                         "producto": producto,
                         "fecha_venta": fecha_venta,
@@ -1081,6 +1085,7 @@ def ventas_resumen():
             productos_unicos.add(row.get("id_producto"))
 
             filas.append({
+                "id_variante": row.get("id_variante"),
                 "id_producto": row.get("id_producto"),
                 "producto": row.get("producto") or "Sin nombre",
                 "fecha_venta": row.get("fecha_venta"),
